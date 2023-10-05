@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "989695097707",
+    "project_id": "mobile-computing-ef31f",
+    "storage_bucket": "mobile-computing-ef31f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989695097707:android:f7682d4fe69e4a6bd1ea2e",
+        "android_client_info": {
+          "package_name": "com.example.zenly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhYY64TkmeLACSaQ2rHRtQr0J_FytBHDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
