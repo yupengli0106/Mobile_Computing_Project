@@ -2,9 +2,12 @@ package com.example.zenly;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 
 public class RegisterActivity extends AppCompatActivity {
@@ -25,14 +28,50 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     public void onSubmit(View view) {
-        final String username = usernameEditText.getText().toString();
-        final String email = emailEditText.getText().toString();
-        final String password = passwordEditText.getText().toString();
+        final String username = usernameEditText.getText().toString().trim();
+        final String email = emailEditText.getText().toString().trim();
+        final String password = passwordEditText.getText().toString().trim();
 
+        // validate input fields before registering user to Firebase Authentication and Realtime Database
+        if (!validation(username, email, password)){
+            return;
+        }
+
+        User newUser = new User(username, email, password);
         // get instance of FirebaseHelper singleton class
-        FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
-        // register user
-        firebaseHelper.registerUser(username, email, password, this, LoginActivity.class);
+        FirebaseHelper db = FirebaseHelper.getInstance();
+        db.registerUser(email, password, newUser, new FirebaseHelper.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(RegisterActivity.this, "Registered Success!", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                Toast.makeText(RegisterActivity.this, "Registered Failed：" + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public boolean validation(String username, String email, String password){
+        if (username.isEmpty()) {
+            usernameEditText.setError("Username is required");
+            usernameEditText.requestFocus();
+            return false;
+        }else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches() || email.isEmpty()){
+            emailEditText.setError("Please enter a valid email");
+            emailEditText.requestFocus();
+            return false;
+        }else if (password.length() < 6) {
+            passwordEditText.setError("Password must be at least 6 characters");
+            passwordEditText.requestFocus();
+            return false;
+        }else {
+            return true;
+        }
     }
 
 }
