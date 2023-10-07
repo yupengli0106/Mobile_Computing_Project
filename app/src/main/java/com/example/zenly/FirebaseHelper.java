@@ -88,4 +88,21 @@ public class FirebaseHelper implements Serializable {
                 });
     }
 
+    /**
+     * use firebase authentication to login a user
+     * @param email the email of the user
+     * @param password the password of the user
+     * @param callback the callback function
+     */
+    public void loginUser(String email, String password, final AuthCallback callback) {
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onSuccess();
+                    } else {
+                        callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+                    }
+                });
+    }
+
 }

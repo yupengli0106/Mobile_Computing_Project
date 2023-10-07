@@ -7,4 +7,6 @@
     <string name="login">Login</string>
     <string name="register">Register</string>
     <string name="zenly_clone">Zenly Clone</string>
+    <string name="go_to_login">Go to Login</string>
+    <string name="go_to_register">Go to Register</string>
 </resources>
