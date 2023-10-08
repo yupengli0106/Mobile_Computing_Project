@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+
+import com.example.zenly.R;
 
 
 public class WelcomeActivity extends AppCompatActivity {

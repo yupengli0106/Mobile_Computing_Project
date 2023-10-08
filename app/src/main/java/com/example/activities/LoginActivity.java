@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -9,6 +9,10 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.example.helpers.FirebaseHelper;
+import com.example.services.LocationService;
+import com.example.zenly.R;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText emailEditText;

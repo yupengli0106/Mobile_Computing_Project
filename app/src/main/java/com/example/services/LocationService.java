@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.services;
 
 import android.app.Service;
 import android.content.Context;
@@ -12,6 +12,8 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
+import com.example.helpers.FirebaseHelper;
+import com.example.model.LocationData;
 import com.google.android.gms.location.*;
 
 public class LocationService extends Service {

@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.model;
 
 public class User {
     public String username;

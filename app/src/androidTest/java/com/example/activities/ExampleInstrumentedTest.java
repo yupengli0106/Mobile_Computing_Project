@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.activities;
 
 import android.content.Context;
 

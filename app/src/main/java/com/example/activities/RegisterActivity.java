@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,6 +8,10 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.example.helpers.FirebaseHelper;
+import com.example.model.User;
+import com.example.zenly.R;
 
 
 public class RegisterActivity extends AppCompatActivity {

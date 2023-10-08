@@ -1,8 +1,10 @@
-package com.example.zenly;
+package com.example.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+
+import com.example.zenly.R;
 
 public class MapActivity extends AppCompatActivity {
 

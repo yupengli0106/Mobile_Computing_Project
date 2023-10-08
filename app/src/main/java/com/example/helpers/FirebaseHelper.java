@@ -1,8 +1,10 @@
-package com.example.zenly;
+package com.example.helpers;
 
 
 import android.util.Log;
 
+import com.example.model.LocationData;
+import com.example.model.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;

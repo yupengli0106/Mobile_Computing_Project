@@ -1,4 +1,4 @@
-package com.example.zenly;
+package com.example.model;
 
 import androidx.annotation.NonNull;
 
