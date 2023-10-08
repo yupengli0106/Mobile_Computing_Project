@@ -13,14 +13,14 @@ import android.view.View;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity {
+public class WelcomeActivity extends AppCompatActivity {
     private static final String ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.welcome_page);
 
         // request location permission from user when app starts
         // first check if location permission is granted
@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // permission granted
                 Toast.makeText(this, "location permission granted", Toast.LENGTH_SHORT).show();
-                //TODO: start location service
             } else {
                 // permission denied
                 Toast.makeText(this, "location permission denied", Toast.LENGTH_SHORT).show();
