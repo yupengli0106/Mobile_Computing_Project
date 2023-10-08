@@ -27,6 +27,9 @@
         <activity android:name=".RegisterActivity" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".MapActivity" />
+
+        <!-- location service-->
+        <service android:name=".LocationService"/>
     </application>
 
 </manifest>

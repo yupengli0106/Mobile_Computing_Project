@@ -47,4 +47,7 @@ dependencies {
     implementation ("com.google.firebase:firebase-auth:22.1.2")
     implementation("com.google.firebase:firebase-analytics")
 
+    //Google Maps
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
+
 }

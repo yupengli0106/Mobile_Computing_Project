@@ -3,6 +3,7 @@ package com.example.zenly;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -38,8 +39,20 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess() {
                 Toast.makeText(LoginActivity.this, "Login Success!", Toast.LENGTH_SHORT).show();
+                // go to map page
                 Intent intent = new Intent(LoginActivity.this, MapActivity.class);
                 startActivity(intent);
+                // start the location service
+                Intent serviceIntent = new Intent(LoginActivity.this, LocationService.class);
+                startService(serviceIntent);
+
+                // start the service in the foreground if the android version is Oreo or above
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent);
+                } else {
+                    startService(serviceIntent);
+                }
+                // finish the login activity
                 finish();
             }
             @Override

@@ -1,12 +1,15 @@
 package com.example.zenly;
 
 
+import android.util.Log;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.Serializable;
 import java.util.Objects;
+
 
 
 /**
@@ -23,11 +26,12 @@ public class FirebaseHelper implements Serializable {
     private static volatile FirebaseHelper instance;
     // Firebase Authentication instance
     private final FirebaseAuth mAuth;
-
     // Firebase Realtime Database reference
     private final DatabaseReference myDatabase;
     // Firebase Realtime Database reference to the users node
     private final DatabaseReference usersRef;
+    // Firebase Realtime Database reference to the locations node
+    private final DatabaseReference locationsRef;
     // Firebase Realtime Database URL
     private static final String URL = "https://mobile-computing-ef31f-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
@@ -42,6 +46,7 @@ public class FirebaseHelper implements Serializable {
         mAuth = FirebaseAuth.getInstance();
         // Get a reference to the root node of the database (users)
         usersRef = myDatabase.child("users");
+        locationsRef = myDatabase.child("locations");
     }
 
     /**
@@ -103,6 +108,19 @@ public class FirebaseHelper implements Serializable {
                         callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
                     }
                 });
+    }
+
+    /**
+     * upload user location data to firebase realtime database
+     * @param locationData the location data to be uploaded (Object of LocationData class)
+     */
+    public void uploadLocation(LocationData locationData) {
+        // get current user's uid from firebase authentication
+        String uid = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        // uid is the key of the location data in the database (locations node)
+        locationsRef.child(uid).setValue(locationData)
+                .addOnSuccessListener(unused -> Log.d("uploadLocation", "uploadLocation: success"))
+                .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
 }
