@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.activities.LoginActivity;
@@ -72,9 +73,31 @@ public class MapFragment extends Fragment {
             googleMap.getUiSettings().setZoomControlsEnabled(true);
             googleMap.getUiSettings().setAllGesturesEnabled(true);
 
-            LatLng initialLocation = new LatLng(-34, 151);
-            myMap.addMarker(new MarkerOptions().position(initialLocation).title("Initial Position"));
-            myMap.moveCamera(CameraUpdateFactory.newLatLng(initialLocation));
+            myMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+                @Override
+                public View getInfoWindow(Marker marker) {
+                    return null; // Use default window frame
+                }
+
+                @Override
+                public View getInfoContents(Marker marker) {
+                    // Inflate custom layout
+                    View view = getLayoutInflater().inflate(R.layout.marker_info_window, null);
+
+                    // Find TextViews in custom layout
+                    TextView title = view.findViewById(R.id.title);
+                    TextView snippet = view.findViewById(R.id.snippet);
+
+                    // Set content
+                    title.setText(marker.getTitle());
+                    snippet.setText(marker.getSnippet());
+
+                    return view;
+                }
+            });
+
+
+
             startRepeatingTask();
         }
     };
@@ -151,6 +174,15 @@ public class MapFragment extends Fragment {
                     if (userId != null) {
                         // update the marker on the map if the user exists
                         LatLng newLocation = new LatLng(locationData.getLatitude(), locationData.getLongitude());
+
+                        // create a new marker
+                        Marker newMarker = myMap.addMarker(new MarkerOptions()//custom marker
+                                        .position(new LatLng(latitude, longitude))
+                                        .title("User: " + userId)
+                                        .snippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel+"%") );
+                        // Add marker to hashmap
+                        userMarkers.put(userId, newMarker);
+                        // Update marker on map
                         updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
                     }
                 }
