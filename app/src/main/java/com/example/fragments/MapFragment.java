@@ -34,25 +34,27 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.gms.maps.model.Marker;
 
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MapFragment extends Fragment {
-    private static final String TAG = "MapFragmentLog";
+    private final String TAG = "MapFragmentLog";
     // GoogleMap object
     private GoogleMap myMap;
     // ValueEventListener to listen for changes in the database
     private ValueEventListener myValueEventListener;
     // use a HashMap to store the markers of all users
-    private final HashMap<String, Marker> userMarkers = new HashMap<>();
+    private final ConcurrentHashMap<String, Marker> userMarkers = new ConcurrentHashMap<>();
     // default zoom level of the map
-    private static final float DEFAULT_ZOOM_LEVEL = 16.0f;
+    private final float DEFAULT_ZOOM_LEVEL = 16.0f;
     // Firebase Realtime Database reference to the locations node
+    private DatabaseReference userRef;
     private DatabaseReference locationsRef;
     // path to the locations node in Firebase Realtime Database
     private static final String LOCATIONS_PATH = "locations";
+    // path to the users node in Firebase Realtime Database
+    private static final String USERS_PATH = "users";
     // boolean to check if it is the first load
     private boolean isFirstLoad = true;
-
 
 
     // callback method for when the map is ready
@@ -75,12 +77,12 @@ public class MapFragment extends Fragment {
 
             myMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
                 @Override
-                public View getInfoWindow(Marker marker) {
+                public View getInfoWindow(@NonNull Marker marker) {
                     return null; // Use default window frame
                 }
 
                 @Override
-                public View getInfoContents(Marker marker) {
+                public View getInfoContents(@NonNull Marker marker) {
                     // Inflate custom layout
                     View view = getLayoutInflater().inflate(R.layout.marker_info_window, null);
 
@@ -122,9 +124,10 @@ public class MapFragment extends Fragment {
         FirebaseUser user = myAuth.getCurrentUser();
 
         if (user != null) {  // check if the user is logged in
-            String uid = user.getUid();
             // get the reference to the locations node
             locationsRef = myDatabase.child(LOCATIONS_PATH);
+            // get the reference to the user node
+            userRef = myDatabase.child(USERS_PATH);
         } else {
             // user is not logged in redirect to login page
             Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
@@ -174,16 +177,39 @@ public class MapFragment extends Fragment {
                     if (userId != null) {
                         // update the marker on the map if the user exists
                         LatLng newLocation = new LatLng(locationData.getLatitude(), locationData.getLongitude());
+                        Marker existingMarker = userMarkers.get(userId); // 查找现有的标记
 
-                        // create a new marker
-                        Marker newMarker = myMap.addMarker(new MarkerOptions()//custom marker
-                                        .position(new LatLng(latitude, longitude))
-                                        .title("User: " + userId)
-                                        .snippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel+"%") );
-                        // Add marker to hashmap
-                        userMarkers.put(userId, newMarker);
-                        // Update marker on map
-                        updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
+
+                        // Get username from Users node
+                        DatabaseReference specificUserRef = userRef.child(userId);
+                        specificUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                // Get username
+                                String username = dataSnapshot.child("username").getValue(String.class);
+
+                                if (existingMarker != null) {// if the marker exists
+                                    // update the existing marker
+                                    existingMarker.setPosition(newLocation);
+                                    existingMarker.setTitle("User: " + username);
+                                    existingMarker.setSnippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel+"%");
+                                    updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
+                                } else {
+                                    // create a new marker
+                                    Marker newMarker = myMap.addMarker(new MarkerOptions()
+                                            .position(newLocation)
+                                            .title("User: " + username)
+                                            .snippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel+"%"));
+                                    userMarkers.put(userId, newMarker);
+                                    updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                Log.d(TAG, "get username onCancelled: " + databaseError.getMessage());
+                            }
+                        });
                     }
                 }
             }
@@ -215,7 +241,7 @@ public class MapFragment extends Fragment {
         if (myMap != null) {
             Marker existingMarker = userMarkers.get(userId); // get the existing marker
             if (existingMarker != null) {
-                existingMarker.setPosition(newLocation);
+                existingMarker.setPosition(newLocation); // update the existing marker's position
             } else {
                 Marker newMarker = myMap.addMarker(new MarkerOptions().position(newLocation).title("User " + userId));
                 userMarkers.put(userId, newMarker); // add the new marker to the HashMap
