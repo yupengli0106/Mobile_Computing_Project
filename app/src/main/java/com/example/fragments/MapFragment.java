@@ -49,6 +49,9 @@ public class MapFragment extends Fragment {
     private DatabaseReference locationsRef;
     // path to the locations node in Firebase Realtime Database
     private static final String LOCATIONS_PATH = "locations";
+    // boolean to check if it is the first load
+    private boolean isFirstLoad = true;
+
 
 
     // callback method for when the map is ready
@@ -97,7 +100,8 @@ public class MapFragment extends Fragment {
 
         if (user != null) {  // check if the user is logged in
             String uid = user.getUid();
-            locationsRef = myDatabase.child(LOCATIONS_PATH).child(uid);
+            // get the reference to the locations node
+            locationsRef = myDatabase.child(LOCATIONS_PATH);
         } else {
             // user is not logged in redirect to login page
             Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
@@ -122,19 +126,22 @@ public class MapFragment extends Fragment {
              */
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d(TAG, "onDataChange: Total Users: " + dataSnapshot.getChildrenCount());
 
                 for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) { // traverse all users
+                    Log.d(TAG, "onDataChange: User ID: " + userSnapshot.getKey());
+                    Log.d(TAG, "onDataChange: User Data: " + userSnapshot.getValue());
 
                     // get the location data of the user
-                    Double latitudeValue = dataSnapshot.child("latitude").getValue(Double.class);
+                    Double latitudeValue = userSnapshot.child("latitude").getValue(Double.class);
                     double latitude = (latitudeValue != null) ? latitudeValue : 0.0;
-                    Double longitudeValue = dataSnapshot.child("longitude").getValue(Double.class);
+                    Double longitudeValue = userSnapshot.child("longitude").getValue(Double.class);
                     double longitude = (longitudeValue != null) ? longitudeValue : 0.0;
-                    Float speedValue = dataSnapshot.child("speed").getValue(Float.class);
+                    Float speedValue = userSnapshot.child("speed").getValue(Float.class);
                     float speed = (speedValue != null) ? speedValue : 0.0f;
-                    Long timestampValue = dataSnapshot.child("timestamp").getValue(Long.class);
+                    Long timestampValue = userSnapshot.child("timestamp").getValue(Long.class);
                     long timestamp = (timestampValue != null) ? timestampValue : 0L;
-                    Integer batteryLevelValue = dataSnapshot.child("batteryLevel").getValue(Integer.class);
+                    Integer batteryLevelValue = userSnapshot.child("batteryLevel").getValue(Integer.class);
                     int batteryLevel = (batteryLevelValue != null) ? batteryLevelValue : 0;
 
                     // create a LocationData object
@@ -181,7 +188,11 @@ public class MapFragment extends Fragment {
                 Marker newMarker = myMap.addMarker(new MarkerOptions().position(newLocation).title("User " + userId));
                 userMarkers.put(userId, newMarker); // add the new marker to the HashMap
             }
-            myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel));
+            // Only move and zoom the camera during the first load
+            if (isFirstLoad) {
+                myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel));
+                isFirstLoad = false; // set it to false so that it won't zoom in again
+            }
         }
     }
 
