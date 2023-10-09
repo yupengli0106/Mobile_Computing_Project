@@ -1,42 +1,64 @@
 package com.example.services;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
 import com.example.helpers.FirebaseHelper;
 import com.example.model.LocationData;
 import com.google.android.gms.location.*;
 
 public class LocationService extends Service {
-
-    private FusedLocationProviderClient myFusedLocationClient;
-    private LocationCallback myLocationCallback;
-
+    private final String TAG = "LocationServiceLog";
+    private FusedLocationProviderClient myFusedLocationClient; // location client to get location updates
+    private LocationCallback myLocationCallback; // location callback to get location updates
     private Location lastLocation;  // last location of the user
     private long lastUpdateTime;  // last time the location is updated (in milliseconds)
     private static final float MIN_DISTANCE = 10;  // minimum distance threshold (in meters)
     private static final long MIN_TIME = 5000;  // minimum time threshold (in milliseconds)
-    private static final FirebaseHelper db = FirebaseHelper.getInstance();
+    private static final FirebaseHelper db = FirebaseHelper.getInstance(); // get instance of FirebaseHelper singleton class
+    private static final int NOTIFICATION_ID = 1; // notification id for foreground service
+    private static final String CHANNEL_ID = "ForegroundServiceChannel"; // notification channel id for foreground service
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        myFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        // create notification channel for foreground service
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Location Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
 
+            // create notification channel for foreground service if it does not exist
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+
+        // initialize location client
+        myFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         // create location callback to get location updates
         myLocationCallback = new LocationCallback() {
-
-            // get new location when location is updated
+            /**
+             * Called when the location has changed.
+             * @param locationResult The new location, as a Location object.
+             */
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
@@ -46,15 +68,17 @@ public class LocationService extends Service {
                 BatteryManager batteryManager = (BatteryManager) getSystemService(Context.BATTERY_SERVICE);
                 int batteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
 
-
+                // check if new location is available
                 if (newLocation != null) {
                     if (lastLocation == null) {
                         lastLocation = newLocation;
                         lastUpdateTime = System.currentTimeMillis();
                     } else {
-                        float distance = newLocation.distanceTo(lastLocation);  // 计算新旧位置之间的距离
+                        // calculate distance between two locations
+                        float distance = newLocation.distanceTo(lastLocation);
                         long currentTime = System.currentTimeMillis();
-                        long timeDifference = currentTime - lastUpdateTime;  // 计算时间差
+                        // calculate time difference between two locations
+                        long timeDifference = currentTime - lastUpdateTime;
 
                         // satisfy both distance and time threshold to upload location data to firebase
                         if (distance >= MIN_DISTANCE || timeDifference >= MIN_TIME) {
@@ -65,8 +89,13 @@ public class LocationService extends Service {
                                     currentTime,
                                     batteryLevel
                             );
-                            // upload location data to firebase
-                            db.uploadLocation(locationData);
+
+                            try {
+                                // upload location data to firebase
+                                db.uploadLocation(locationData);
+                            }catch (Exception e){
+                                Log.d(TAG, "Location updated Failed: " + e.getMessage());
+                            }
 
                             // update last location and last update time
                             lastLocation = newLocation;
@@ -77,7 +106,10 @@ public class LocationService extends Service {
 
             }
 
-            // check if location is available when location availability changes
+            /**
+             * Called when the availability of the location information changes.
+             * @param locationAvailability the availability of the location information
+             */
             @Override
             public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
                 super.onLocationAvailability(locationAvailability);
@@ -92,6 +124,9 @@ public class LocationService extends Service {
         startLocationUpdates();
     }
 
+    /**
+     * Start location updates
+     */
     private void startLocationUpdates() {
         LocationRequest mLocationRequest = new LocationRequest();
         // Set the interval for location updates (in milliseconds)
@@ -106,23 +141,62 @@ public class LocationService extends Service {
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // location permission is denied, do not update user location
+            Log.d(TAG, "startLocationUpdates: location permission is denied");
             return;
         } else {
             // location permission is granted, start location service
             myFusedLocationClient.requestLocationUpdates(mLocationRequest, myLocationCallback, Looper.myLooper());
+            Log.d(TAG, "startLocationUpdates: location permission is granted, initialize location service");
         }
 
     }
 
+    /**
+     * Called by the system every time a client explicitly starts the service by calling
+     * @param intent The Intent that was used to bind to this service,
+     * as given to {@link android.content.Context#bindService
+     * Context.bindService}.  Note that any extras that were included with
+     * the Intent at that point will <em>not</em> be seen here.
+     *
+     * @return The communication channel to the service.
+     */
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
+    /**
+     * Called by the system to notify a Service that it is no longer used and is being removed.
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();
         myFusedLocationClient.removeLocationUpdates(myLocationCallback);
     }
+
+    /**
+     * Called by the system every time a client explicitly starts the service by calling
+     * @param intent The Intent supplied to {@link android.content.Context#startService},
+     * as given.  This may be null if the service is being restarted after
+     * its process has gone away, and it had previously returned anything
+     * except {@link #START_STICKY_COMPATIBILITY}.
+     * @param flags Additional data about this start request.
+     * @param startId A unique integer representing this specific request to
+     * start.  Use with {@link #stopSelfResult(int)}.
+     *
+     * @return The return value indicates what semantics the system should use for the service's
+     */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Foreground Service")
+                .setContentText("Your service is running in the foreground.")
+                .build();
+
+        startForeground(NOTIFICATION_ID, notification);
+
+        return START_NOT_STICKY;
+    }
+
 }
 

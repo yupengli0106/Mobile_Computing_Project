@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -15,8 +16,9 @@ import com.example.services.LocationService;
 import com.example.zenly.R;
 
 public class LoginActivity extends AppCompatActivity {
-    private EditText emailEditText;
-    private EditText passwordEditText;
+    private final String TAG = "LoginActivityLog";
+    private EditText emailEditText; // email input field
+    private EditText passwordEditText; // password input field
 
 
     @Override
@@ -29,6 +31,11 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
+
+    /**
+     * callback method for login button
+     * @param view the login button
+     */
     public void onLogin(View view) {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -40,25 +47,34 @@ public class LoginActivity extends AppCompatActivity {
 
         FirebaseHelper db = FirebaseHelper.getInstance();
         db.loginUser(email, password, new FirebaseHelper.AuthCallback() {
+            /**
+             * Called when the login is successful.
+             */
             @Override
             public void onSuccess() {
                 Toast.makeText(LoginActivity.this, "Login Success!", Toast.LENGTH_SHORT).show();
                 // go to map page
-                Intent intent = new Intent(LoginActivity.this, MapActivity.class);
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
+
                 // start the location service
                 Intent serviceIntent = new Intent(LoginActivity.this, LocationService.class);
-                startService(serviceIntent);
-
                 // start the service in the foreground if the android version is Oreo or above
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(serviceIntent);
                 } else {
                     startService(serviceIntent);
                 }
+                Log.d(TAG, "onSuccess: start location service");
+
                 // finish the login activity
                 finish();
             }
+
+            /**
+             * Called when the login is failed.
+             * @param errorMessage The error message returned from Firebase Authentication.
+             */
             @Override
             public void onFailure(String errorMessage) {
                 if (errorMessage.equals("An internal error has occurred. [ INVALID_LOGIN_CREDENTIALS ]")) {// invalid email or password
