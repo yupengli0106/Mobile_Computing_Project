@@ -13,4 +13,6 @@
     <string name="friends">Friends</string>
     <string name="map">Map</string>
     <string name="profile">Profile</string>
+    <string name="add_friend">ADD FRIEND</string>
+    <string name="search_hint">search friends</string>
 </resources>
