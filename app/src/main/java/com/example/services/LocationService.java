@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -37,6 +38,7 @@ public class LocationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "onCreate: create location service");
 
         // create notification channel for foreground service
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -142,7 +144,7 @@ public class LocationService extends Service {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // location permission is denied, do not update user location
             Log.d(TAG, "startLocationUpdates: location permission is denied");
-            return;
+            Toast.makeText(this, "Location permission is denied", Toast.LENGTH_SHORT).show();
         } else {
             // location permission is granted, start location service
             myFusedLocationClient.requestLocationUpdates(mLocationRequest, myLocationCallback, Looper.myLooper());
@@ -188,6 +190,7 @@ public class LocationService extends Service {
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand: start location service");
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Foreground Service")
                 .setContentText("Your service is running in the foreground.")
@@ -199,4 +202,3 @@ public class LocationService extends Service {
     }
 
 }
-

@@ -44,8 +44,8 @@ public class MapFragment extends Fragment {
     private ValueEventListener myValueEventListener;
     // use a HashMap to store the markers of all users
     private final ConcurrentHashMap<String, Marker> userMarkers = new ConcurrentHashMap<>();
-    // default zoom level of the map
-    private final float DEFAULT_ZOOM_LEVEL = 16.0f;
+    // default zoom level of the map when the app is first loaded (street level)
+    private final float DEFAULT_ZOOM_LEVEL = 15.0f;
     // Firebase Realtime Database reference to the locations node
     private DatabaseReference userRef;
     private DatabaseReference locationsRef;
@@ -55,6 +55,8 @@ public class MapFragment extends Fragment {
     private static final String USERS_PATH = "users";
     // boolean to check if it is the first load
     private boolean isFirstLoad = true;
+    // Firebase user
+    private FirebaseUser currentUser = null;
 
 
     // callback method for when the map is ready
@@ -98,8 +100,6 @@ public class MapFragment extends Fragment {
                 }
             });
 
-
-
             startRepeatingTask();
         }
     };
@@ -121,9 +121,9 @@ public class MapFragment extends Fragment {
 
         DatabaseReference myDatabase = FirebaseDatabase.getInstance().getReference();
         FirebaseAuth myAuth = FirebaseAuth.getInstance();
-        FirebaseUser user = myAuth.getCurrentUser();
+        currentUser = myAuth.getCurrentUser();
 
-        if (user != null) {  // check if the user is logged in
+        if (currentUser != null) {  // check if the user is logged in
             // get the reference to the locations node
             locationsRef = myDatabase.child(LOCATIONS_PATH);
             // get the reference to the user node
@@ -177,8 +177,15 @@ public class MapFragment extends Fragment {
                     if (userId != null) {
                         // update the marker on the map if the user exists
                         LatLng newLocation = new LatLng(locationData.getLatitude(), locationData.getLongitude());
-                        Marker existingMarker = userMarkers.get(userId); // 查找现有的标记
+                        Marker existingMarker = userMarkers.get(userId); // find the existing marker
 
+                        // move the camera to the current user's location if when the user is logged in
+                        if(currentUser != null && userId.equals(currentUser.getUid())){
+                            if (isFirstLoad){
+                                myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, DEFAULT_ZOOM_LEVEL));
+                                isFirstLoad = false;
+                            }
+                        }
 
                         // Get username from Users node
                         DatabaseReference specificUserRef = userRef.child(userId);
@@ -187,6 +194,7 @@ public class MapFragment extends Fragment {
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 // Get username
                                 String username = dataSnapshot.child("username").getValue(String.class);
+                                Log.d(TAG, "get username onDataChange: " + username);
 
                                 if (existingMarker != null) {// if the marker exists
                                     // update the existing marker
@@ -200,8 +208,15 @@ public class MapFragment extends Fragment {
                                             .position(newLocation)
                                             .title("User: " + username)
                                             .snippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel+"%"));
-                                    userMarkers.put(userId, newMarker);
-                                    updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
+
+                                    if (newMarker != null){
+                                        userMarkers.put(userId, newMarker);
+                                        updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL);
+                                    }else {
+                                        Log.d(TAG, "onDataChange: newMarker is null");
+                                        Toast.makeText(getContext(), "Error fetching data", Toast.LENGTH_SHORT).show();
+                                    }
+
                                 }
                             }
 
@@ -241,11 +256,19 @@ public class MapFragment extends Fragment {
         if (myMap != null) {
             Marker existingMarker = userMarkers.get(userId); // get the existing marker
             if (existingMarker != null) {
+                Log.d(TAG, "Updating marker for user: " + userId);
                 existingMarker.setPosition(newLocation); // update the existing marker's position
             } else {
+                Log.d(TAG, "Creating new marker for user: " + userId);
                 Marker newMarker = myMap.addMarker(new MarkerOptions().position(newLocation).title("User " + userId));
-                userMarkers.put(userId, newMarker); // add the new marker to the HashMap
+                if (newMarker != null){
+                    userMarkers.put(userId, newMarker); // add the new marker to the HashMap
+                }else {
+                    Log.d(TAG, "updateMapMarker: newMarker is null");
+                    Toast.makeText(getContext(), "Error fetching data", Toast.LENGTH_SHORT).show();
+                }
             }
+
             // Only move and zoom the camera during the first load
             if (isFirstLoad) {
                 myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel));
