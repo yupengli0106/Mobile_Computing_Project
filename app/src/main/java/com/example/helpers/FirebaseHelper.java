@@ -3,15 +3,22 @@ package com.example.helpers;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.example.model.LocationData;
 import com.example.model.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-
 
 
 /**
@@ -21,7 +28,16 @@ import java.util.Objects;
 public class FirebaseHelper implements Serializable {
     public interface AuthCallback {
         void onSuccess();
+
         void onFailure(String errorMessage);
+    }
+
+    public interface UserSearchCallback {
+        void onUserFound(List<User> users);
+
+        void onUserNotFound();
+
+        void onError(Exception e);
     }
 
     // Singleton pattern
@@ -53,6 +69,7 @@ public class FirebaseHelper implements Serializable {
 
     /**
      * Get the singleton instance of this class
+     *
      * @return the singleton instance of this class
      */
     public static FirebaseHelper getInstance() {
@@ -69,6 +86,7 @@ public class FirebaseHelper implements Serializable {
 
     /**
      * This method is called immediately after an object of this class is deserialized.
+     *
      * @return the singleton instance of this class
      */
     protected Object readResolve() {
@@ -77,9 +95,10 @@ public class FirebaseHelper implements Serializable {
 
     /**
      * use firebase authentication to register a user
-     * @param email the email of the user
+     *
+     * @param email    the email of the user
      * @param password the password of the user
-     * @param user the user object
+     * @param user     the user object
      * @param callback the callback function
      */
     public void registerUser(String email, String password, final User user, final AuthCallback callback) {
@@ -97,7 +116,8 @@ public class FirebaseHelper implements Serializable {
 
     /**
      * use firebase authentication to login a user
-     * @param email the email of the user
+     *
+     * @param email    the email of the user
      * @param password the password of the user
      * @param callback the callback function
      */
@@ -114,6 +134,7 @@ public class FirebaseHelper implements Serializable {
 
     /**
      * upload user location data to firebase realtime database
+     *
      * @param locationData the location data to be uploaded (Object of LocationData class)
      */
     public void uploadLocation(LocationData locationData) {
@@ -123,6 +144,35 @@ public class FirebaseHelper implements Serializable {
         locationsRef.child(uid).setValue(locationData)
                 .addOnSuccessListener(unused -> Log.d("uploadLocation", "uploadLocation: success"))
                 .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
+    }
+
+    public void searchUsers(String keyword, final UserSearchCallback callback) {
+        Query searchQuery = usersRef.orderByChild("username").startAt(keyword).endAt(keyword + "\uf8ff");
+
+        // Executing the query
+        searchQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<User> userList = new ArrayList<>();
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                        User user = userSnapshot.getValue(User.class);
+                        if (user != null) {
+                            userList.add(user);
+                        }
+                    }
+                    callback.onUserFound(userList);
+                } else {
+                    callback.onUserNotFound();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handling errors
+                callback.onError(databaseError.toException());
+            }
+        });
     }
 
 }

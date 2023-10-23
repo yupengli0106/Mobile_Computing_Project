@@ -13,6 +13,9 @@
             android:id="@+id/search_field"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_search"
+            android:imeOptions="actionSearch"
+            android:singleLine="true"
             android:hint="search user" />
     </com.google.android.material.textfield.TextInputLayout>
 
