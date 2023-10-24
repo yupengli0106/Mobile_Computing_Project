@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.model.FriendRequest;
 import com.example.model.LocationData;
 import com.example.model.User;
 import com.google.firebase.auth.FirebaseAuth;
@@ -39,6 +40,24 @@ public class FirebaseHelper implements Serializable {
         void onUserNotFound();
 
         void onError(Exception e);
+    }
+
+    public interface FriendRequestCallback {
+        void onFriendRequestReceived(List<FriendRequest> friendRequests);
+
+        void onFriendRequestError(Exception e);
+    }
+
+    public interface UserProfileCallback {
+        void onProfileReceived(User user);
+
+        void onFailed(Exception e);
+    }
+
+    public interface FriendshipResponseCallback {
+        void onSuccess();
+
+        void onFailure(String errorMessage);
     }
 
     // Singleton pattern
@@ -180,8 +199,9 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
-    public void sendFriendRequest(String fromUserId, String toUserId, final AuthCallback callback) {
+    public void sendFriendRequest(String requester, String fromUserId, String toUserId, final AuthCallback callback) {
         HashMap<String, String> friendRequest = new HashMap<>();
+        friendRequest.put("requester", requester);
         friendRequest.put("fromUserId", fromUserId);
         friendRequest.put("toUserId", toUserId);
         friendRequest.put("status", "pending");
@@ -203,4 +223,111 @@ public class FirebaseHelper implements Serializable {
                     callback.onFailure("Failed to send friend request: " + e.getMessage());
                 });
     }
+
+    public void listenForFriendRequests(FriendRequestCallback callback) {
+
+        Query friendRequestQuery = friendRequestsRef.orderByChild("toUserId").equalTo(Objects.requireNonNull(mAuth.getCurrentUser()).getUid());
+
+        friendRequestQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<FriendRequest> friendRequests = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    FriendRequest friendRequest = snapshot.getValue(FriendRequest.class);
+                    String requestId = snapshot.getKey();
+
+                    if (friendRequest != null) {
+                        friendRequest.setRequestId(requestId);
+                        if ("pending".equals(friendRequest.getStatus())) {
+                            friendRequests.add(friendRequest);
+                        }
+                    }
+                }
+                callback.onFriendRequestReceived(friendRequests);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onFriendRequestError(databaseError.toException());
+            }
+        });
+    }
+
+
+    public void getUserProfile(String userId, final UserProfileCallback callback) {
+        DatabaseReference userReference = usersRef.child(userId);
+        userReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                if (user != null) {
+                    user.setUserId(dataSnapshot.getKey());
+                    callback.onProfileReceived(user);
+                } else {
+                    callback.onFailed(new Exception("User not found"));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Error callback
+                callback.onFailed(databaseError.toException());
+            }
+        });
+    }
+
+    public void respondToFriendRequest(String requestId, String fromUserId, String toUserId, boolean accepted, final FriendshipResponseCallback callback) {
+        DatabaseReference requestRef = friendRequestsRef.child(requestId);
+
+        requestRef.child("status").setValue(accepted ? "accepted" : "rejected")
+                .addOnSuccessListener(aVoid -> {
+                    if (accepted) {
+                        DatabaseReference user1FriendsRef = usersRef.child(fromUserId).child("friends");
+                        DatabaseReference user2FriendsRef = usersRef.child(toUserId).child("friends");
+
+                        // Check if "friends" nodes exist for both users, and then proceed
+                        user1FriendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                // Proceed only if the "friends" node exists or it's okay to create it
+                                proceedWithFriendship(fromUserId, toUserId, user1FriendsRef, user2FriendsRef, callback);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Log.w("FirebaseHelper", "Failed to check if 'friends' node exists for user1", error.toException());
+                                callback.onFailure("Failed to check friends data for users.");
+                            }
+                        });
+                    } else {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.w("FirebaseHelper", "Error updating friend request status", e);
+                    callback.onFailure(e.getMessage());
+                });
+    }
+
+    private void proceedWithFriendship(String fromUserId, String toUserId, DatabaseReference user1FriendsRef, DatabaseReference user2FriendsRef, final FriendshipResponseCallback callback) {
+        String friendshipKey1 = user1FriendsRef.push().getKey();
+        String friendshipKey2 = user2FriendsRef.push().getKey();
+
+        if (friendshipKey1 != null && friendshipKey2 != null) {
+            // Prepare to update both users' friends lists
+            user1FriendsRef.child(friendshipKey1).setValue(toUserId)
+                    .addOnSuccessListener(aVoid ->
+                            // Once user1 is updated, proceed to update user2
+                            user2FriendsRef.child(friendshipKey2).setValue(fromUserId)
+                                    .addOnSuccessListener(aVoidInner -> callback.onSuccess())
+                                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()))
+                    )
+                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        } else {
+            Log.w("FirebaseHelper", "Error obtaining unique key for friendship");
+            callback.onFailure("Could not generate unique key for friendship.");
+        }
+    }
+
+
 }

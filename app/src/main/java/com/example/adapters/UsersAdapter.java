@@ -43,42 +43,48 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         holder.userName.setText(currentUser.username);
         holder.userAvatar.setText(currentUser.username.substring(0, 1).toUpperCase());
 
-        holder.addFriendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message = "Are you sure you want to add " + currentUser.username + " as a friend?";
-                new MaterialAlertDialogBuilder(v.getContext())
-                        .setTitle("Confirm")
-                        .setMessage(message)
-                        .setPositiveButton("Add", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+        holder.addFriendButton.setOnClickListener(v -> {
+            String message = "Are you sure you want to add " + currentUser.username + " as a friend?";
+            new MaterialAlertDialogBuilder(v.getContext())
+                    .setTitle("Confirm")
+                    .setMessage(message)
+                    .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
-                                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                                
-                                firebaseHelper.sendFriendRequest(currentUserId, currentUser.getUserId(), new FirebaseHelper.AuthCallback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Toast.makeText(v.getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
-                                    }
+                            String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                            firebaseHelper.getUserProfile(currentUserId, new FirebaseHelper.UserProfileCallback() {
+                                @Override
+                                public void onProfileReceived(User user) {
+                                    firebaseHelper.sendFriendRequest(user.username, currentUserId, currentUser.getUserId(), new FirebaseHelper.AuthCallback() {
+                                        @Override
+                                        public void onSuccess() {
+                                            Toast.makeText(v.getContext(), "Friend request sent!", Toast.LENGTH_SHORT).show();
+                                        }
 
-                                    @Override
-                                    public void onFailure(String errorMessage) {
-                                        Toast.makeText(v.getContext(), "Failed to send friend request: " + errorMessage, Toast.LENGTH_SHORT).show();
-                                    }
+                                        @Override
+                                        public void onFailure(String errorMessage) {
+                                            Toast.makeText(v.getContext(), "Failed to send friend request: " + errorMessage, Toast.LENGTH_SHORT).show();
+                                        }
 
-                                });
-                            }
-                        })
-                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        })
-                        .show();
-            }
+                                    });
+                                }
+
+                                @Override
+                                public void onFailed(Exception e) {
+
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .show();
         });
     }
 
