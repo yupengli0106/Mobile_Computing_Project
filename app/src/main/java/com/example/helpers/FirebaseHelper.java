@@ -17,6 +17,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,6 +52,7 @@ public class FirebaseHelper implements Serializable {
     // Firebase Realtime Database reference to the locations node
     private final DatabaseReference locationsRef;
     // Firebase Realtime Database URL
+    private final DatabaseReference friendRequestsRef;
     private static final String URL = "https://mobile-computing-ef31f-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
 
@@ -65,6 +67,7 @@ public class FirebaseHelper implements Serializable {
         // Get a reference to the root node of the database (users)
         usersRef = myDatabase.child("users");
         locationsRef = myDatabase.child("locations");
+        friendRequestsRef = myDatabase.child("friendRequests");
     }
 
     /**
@@ -157,7 +160,9 @@ public class FirebaseHelper implements Serializable {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
                         User user = userSnapshot.getValue(User.class);
+                        String userId = userSnapshot.getKey();
                         if (user != null) {
+                            user.setUserId(userId);
                             userList.add(user);
                         }
                     }
@@ -175,4 +180,27 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
+    public void sendFriendRequest(String fromUserId, String toUserId, final AuthCallback callback) {
+        HashMap<String, String> friendRequest = new HashMap<>();
+        friendRequest.put("fromUserId", fromUserId);
+        friendRequest.put("toUserId", toUserId);
+        friendRequest.put("status", "pending");
+
+        String requestId = friendRequestsRef.push().getKey();
+
+        if (requestId == null) {
+            callback.onFailure("Failed to send friend request");
+            return;
+        }
+
+        friendRequestsRef.child(requestId).setValue(friendRequest)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FirebaseHelper", "Friend request sent successfully.");
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FirebaseHelper", "Failed to send friend request.", e);
+                    callback.onFailure("Failed to send friend request: " + e.getMessage());
+                });
+    }
 }

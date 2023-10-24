@@ -1,6 +1,7 @@
 package com.example.model;
 
 public class User {
+    public String userId;
     public String username;
     public String email;
     public String password;
@@ -14,6 +15,15 @@ public class User {
         this.email = email;
         this.password = password;
     }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public String getUsername() {
         return username;
     }
