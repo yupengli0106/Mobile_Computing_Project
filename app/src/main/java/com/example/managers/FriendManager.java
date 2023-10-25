@@ -31,5 +31,16 @@ public class FriendManager {
         friendsListLiveData.setValue(friendList);
     }
 
+    public boolean isUserAFriend(String userId) {
+        List<Friend> friendsList = friendsListLiveData.getValue();
+        if (friendsList != null) {
+            for (Friend friend : friendsList) {
+                if (friend.getUserId().equals(userId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 }
