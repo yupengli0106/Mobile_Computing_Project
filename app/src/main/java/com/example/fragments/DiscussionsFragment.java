@@ -11,25 +11,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.adapters.UserAdapter;
+import com.example.adapters.DiscussionsAdapter;
 import com.example.helpers.FirebaseHelper;
 import com.example.model.User;
 import com.example.zenly.R;
-import com.example.zenly.databinding.FragmentUsersBinding;
 
 import java.util.List;
 
-public class UsersFragment extends Fragment {
+public class DiscussionsFragment extends Fragment {
 
     private final String TAG = "UsersFragment";
-    private FragmentUsersBinding binding;
 
-    public UsersFragment() {
+    public DiscussionsFragment() {
         // Required empty public constructor
     }
 
-    public static UsersFragment newInstance(String param1, String param2) {
-        UsersFragment fragment = new UsersFragment();
+    public static DiscussionsFragment newInstance(String param1, String param2) {
+        DiscussionsFragment fragment = new DiscussionsFragment();
         Bundle args = new Bundle();
         return fragment;
     }
@@ -43,7 +41,7 @@ public class UsersFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_users, container, false);
+        return inflater.inflate(R.layout.fragment_discussions, container, false);
     }
 
     @Override
@@ -76,7 +74,7 @@ public class UsersFragment extends Fragment {
                 RecyclerView userRecyclerView = view.findViewById(R.id.usersRecyclerView);
                 if (users != null && !users.isEmpty()) {
                     Log.d(TAG, "getUsers: going in");
-                    userRecyclerView.setAdapter(new UserAdapter(users));
+                    userRecyclerView.setAdapter(new DiscussionsAdapter(users));
                     userRecyclerView.setVisibility(View.VISIBLE);
                 } else {
                     Log.d(TAG, "getUsers: lol not going");

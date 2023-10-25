@@ -1,8 +1,5 @@
 package com.example.adapters;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,11 +13,11 @@ import com.example.zenly.R;
 
 import java.util.List;
 
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
+public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.UserViewHolder> {
 
     private final List<User> users;
 
-    public UserAdapter(List<User> users) {
+    public DiscussionsAdapter(List<User> users) {
         this.users = users;
     }
 

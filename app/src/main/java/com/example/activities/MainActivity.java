@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.fragments.MapFragment;
-import com.example.fragments.UsersFragment;
+import com.example.fragments.DiscussionsFragment;
 import com.example.zenly.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private final FragmentManager fragmentManager = getSupportFragmentManager();
     // reuse mapFragment
     private final MapFragment mapFragment = new MapFragment();
-    private final UsersFragment usersFragment = new UsersFragment();
+    private final DiscussionsFragment discussionsFragment = new DiscussionsFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = mapFragment;  // Reuse mapFragment
             }
                 else if (itemId == R.id.nav_chat) {
-                    selectedFragment = usersFragment;
+                    selectedFragment = discussionsFragment;
 //              } else if (itemId == R.id.nav_settings) {
 //                    TODO: navigate to settings fragment
                 }
