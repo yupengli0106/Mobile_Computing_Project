@@ -1,15 +1,12 @@
 package com.example.fragments;
 
 import android.os.Bundle;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.adapters.FriendRequestsAdapter;
 import com.example.adapters.UsersAdapter;
 import com.example.helpers.FirebaseHelper;
-import com.example.model.FriendRequest;
+import com.example.managers.FriendRequestManager;
 import com.example.model.User;
 import com.example.zenly.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -45,6 +42,8 @@ public class FriendsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        friendRequestsAdapter = new FriendRequestsAdapter(new ArrayList<>());
     }
 
     @Override
@@ -62,12 +61,10 @@ public class FriendsFragment extends Fragment {
         addFriendButton.setOnClickListener(v -> showAddFriendDialog());
 
         ImageButton notificationButton = view.findViewById(R.id.button_notifications);
-        notificationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showFriendRequestsDialog();
-            }
+        FriendRequestManager.getInstance().getFriendRequests().observe(getViewLifecycleOwner(), friendRequests -> {
+            friendRequestsAdapter.setFriendRequests(friendRequests);
         });
+        notificationButton.setOnClickListener(v -> showFriendRequestsDialog());
 
         SearchBar searchBar = view.findViewById(R.id.search_bar);
         SearchView searchView = view.findViewById(R.id.search_view);
@@ -82,20 +79,17 @@ public class FriendsFragment extends Fragment {
 
 
         TextInputEditText searchField = dialogView.findViewById(R.id.search_field);
-        searchField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                boolean handled = false;
+        searchField.setOnEditorActionListener((v, actionId, event) -> {
+            boolean handled = false;
 
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
 
-                    String searchText = searchField.getText().toString();
-                    performUserSearch(searchText);
+                String searchText = searchField.getText().toString();
+                performUserSearch(searchText);
 
-                    handled = true;
-                }
-                return handled;
+                handled = true;
             }
+            return handled;
         });
 
         RecyclerView usersList = dialogView.findViewById(R.id.users_list);
@@ -139,21 +133,8 @@ public class FriendsFragment extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_friend_requests, null);
 
         RecyclerView friendRequestsView = dialogView.findViewById(R.id.friend_requests);
-        friendRequestsAdapter = new FriendRequestsAdapter(new ArrayList<>());
         friendRequestsView.setLayoutManager(new LinearLayoutManager(getContext()));
         friendRequestsView.setAdapter(friendRequestsAdapter);
-        firebaseHelper.listenForFriendRequests(new FirebaseHelper.FriendRequestCallback() {
-            @Override
-            public void onFriendRequestReceived(List<FriendRequest> friendRequests) {
-                friendRequestsAdapter.setFriendRequests(friendRequests);
-            }
-
-            @Override
-            public void onFriendRequestError(Exception e) {
-                Log.e("FriendRequestDialog", "Error getting friend requests", e);
-                Toast.makeText(getContext(), "Error while loading friend requests.", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         builder.setView(dialogView)
                 .setTitle("Friend Apply")

@@ -12,8 +12,13 @@ import com.example.fragments.ChatFragment;
 import com.example.fragments.FriendsFragment;
 import com.example.fragments.MapFragment;
 import com.example.fragments.ProfileFragment;
+import com.example.helpers.FirebaseHelper;
+import com.example.managers.FriendRequestManager;
+import com.example.model.FriendRequest;
 import com.example.zenly.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     // fragment manager and fragments
@@ -23,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private final ChatFragment chatFragment = new ChatFragment();
     private final FriendsFragment friendsFragment = new FriendsFragment();
     private final ProfileFragment profileFragment = new ProfileFragment();
+    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +42,19 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager.beginTransaction().replace(R.id.fragment_container, mapFragment).commit();
 
         bottomNavigationView.setSelectedItemId(R.id.nav_map);
+
+        //listen the friendrequest
+        firebaseHelper.listenForFriendRequests(new FirebaseHelper.FriendRequestCallback() {
+            @Override
+            public void onFriendRequestReceived(List<FriendRequest> friendRequests) {
+                FriendRequestManager.getInstance().setFriendRequests(friendRequests);
+            }
+
+            @Override
+            public void onFriendRequestError(Exception e) {
+            }
+        });
+
 
         //setOnNavigationItemSelectedListener
         bottomNavigationView.setOnItemSelectedListener(item -> {
