@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.fragments.MapFragment;
+import com.example.fragments.UsersFragment;
 import com.example.zenly.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private final FragmentManager fragmentManager = getSupportFragmentManager();
     // reuse mapFragment
     private final MapFragment mapFragment = new MapFragment();
+    private final UsersFragment usersFragment = new UsersFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +39,11 @@ public class MainActivity extends AppCompatActivity {
 //                selectedFragment = new MapFragment();
                 selectedFragment = mapFragment;  // Reuse mapFragment
             }
-//                else if (itemId == R.id.nav_chat) {
-//                    TODO: navigate to chat fragment
-//                } else if (itemId == R.id.nav_settings) {
+                else if (itemId == R.id.nav_chat) {
+                    selectedFragment = usersFragment;
+//              } else if (itemId == R.id.nav_settings) {
 //                    TODO: navigate to settings fragment
-//                }
+                }
 
             if (selectedFragment != null) {
                 fragmentManager.beginTransaction().replace(R.id.fragment_container, selectedFragment).commit();

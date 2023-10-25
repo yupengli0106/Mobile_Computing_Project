@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textMessage"
+        android:layout_width="268dp"
+        android:layout_height="48dp"
+        android:background="@drawable/chat_background_received_message"
+        android:padding="12dp"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.335"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.04" />
+
+    <TextView
+        android:id="@+id/textDateTime"
+        android:layout_width="66dp"
+        android:layout_height="19dp"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="16dp"
+        android:text="8:12pm"
+        android:textColor="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textMessage" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="41dp"
+        android:layout_height="41dp"
+        android:src="@drawable/chat_background_image"
+        app:layout_constraintBottom_toBottomOf="@+id/textMessage"
+        app:layout_constraintEnd_toStartOf="@+id/textMessage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/textMessage" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

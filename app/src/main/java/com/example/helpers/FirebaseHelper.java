@@ -6,10 +6,13 @@ import android.util.Log;
 import com.example.model.LocationData;
 import com.example.model.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -22,6 +25,10 @@ public class FirebaseHelper implements Serializable {
     public interface AuthCallback {
         void onSuccess();
         void onFailure(String errorMessage);
+    }
+
+    public interface UsersCallback {
+        void onCallback(List<User> users);
     }
 
     // Singleton pattern
@@ -125,4 +132,21 @@ public class FirebaseHelper implements Serializable {
                 .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
+
+    public void getUsers(UsersCallback callback) {
+        List<User> users = new ArrayList<>();
+        usersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Log.d("getUsers", "getUsers: success");
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    User user = snapshot.getValue(User.class);
+                    users.add(user);
+                }
+                callback.onCallback(users);
+            } else {
+                Log.w("getUsers", "getUsers: failure", task.getException());
+                callback.onCallback(null); // or an empty list
+            }
+        });
+    }
 }
