@@ -1,19 +1,18 @@
 package com.example.model;
 
-public class User {
-    public String userId;
-    public String username;
-    public String email;
-    public String password;
+public class Friend {
+    private String userId;
+    private String username;
+    private String email;
+    
+    public Friend() {
 
-    public User() {
-        // Default constructor is required for Firebase
     }
 
-    public User(String username, String email, String password) {
+    public Friend(String userId, String username, String email) {
+        this.userId = userId;
         this.username = username;
         this.email = email;
-        this.password = password;
     }
 
     public String getUserId() {
@@ -40,13 +39,12 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    @Override
+    public String toString() {
+        return "Friend{" +
+                "userId='" + userId + '\'' +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-
 }
