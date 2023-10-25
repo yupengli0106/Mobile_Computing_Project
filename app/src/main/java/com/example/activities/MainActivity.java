@@ -13,7 +13,9 @@ import com.example.fragments.FriendsFragment;
 import com.example.fragments.MapFragment;
 import com.example.fragments.ProfileFragment;
 import com.example.helpers.FirebaseHelper;
+import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
+import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.zenly.R;
 import com.google.android.material.badge.BadgeDrawable;
@@ -68,6 +70,25 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFriendRequestError(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the friend requests: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        //listen for friend list
+        firebaseHelper.listenForFriendsList(new FirebaseHelper.FriendsListCallback() {
+            @Override
+            public void onFriendsListReceived(List<Friend> friendsList) {
+                FriendManager.getInstance().setFriendsList(friendsList);
+                Log.d("FriendsListUpdate", "Updated friends list:");
+                for (Friend friend : friendsList) {
+                    // 假设 Friend 类有一个名为 getName 的方法来获取朋友的名字
+                    Log.d("FriendsListUpdate", "Friend: " + friend.toString());
+                }
+            }
+
+            @Override
+            public void onFailed(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the friend list: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 

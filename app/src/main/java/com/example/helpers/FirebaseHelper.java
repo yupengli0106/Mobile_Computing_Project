@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.model.LocationData;
 import com.example.model.User;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -58,6 +60,12 @@ public class FirebaseHelper implements Serializable {
         void onSuccess();
 
         void onFailure(String errorMessage);
+    }
+
+    public interface FriendsListCallback {
+        void onFriendsListReceived(List<Friend> friendsList);
+
+        void onFailed(Exception e);
     }
 
     // Singleton pattern
@@ -326,6 +334,64 @@ public class FirebaseHelper implements Serializable {
         } else {
             Log.w("FirebaseHelper", "Error obtaining unique key for friendship");
             callback.onFailure("Could not generate unique key for friendship.");
+        }
+    }
+
+    public void listenForFriendsList(final FriendsListCallback callback) {
+        String uid = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        DatabaseReference friendsRef = usersRef.child(uid).child("friends");
+
+        friendsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> friendIds = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String friendId = snapshot.getValue(String.class);
+                    if (friendId != null) {
+                        friendIds.add(friendId);
+                    }
+                }
+
+                fetchFriendDetails(friendIds, callback);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onFailed(databaseError.toException());
+            }
+        });
+    }
+
+    private void fetchFriendDetails(List<String> friendIds, final FriendsListCallback callback) {
+        if (friendIds.isEmpty()) {
+            callback.onFriendsListReceived(new ArrayList<>());
+            return;
+        }
+
+        List<Friend> friendsList = new ArrayList<>();
+        AtomicInteger completionCount = new AtomicInteger(0);
+
+        for (String friendId : friendIds) {
+            usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Friend friend = dataSnapshot.getValue(Friend.class);
+                    String userId = dataSnapshot.getKey();
+                    if (friend != null) {
+                        friend.setUserId(userId);
+                        friendsList.add(friend);
+                    }
+
+                    if (completionCount.incrementAndGet() == friendIds.size()) {
+                        callback.onFriendsListReceived(friendsList);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    callback.onFailed(databaseError.toException());
+                }
+            });
         }
     }
 

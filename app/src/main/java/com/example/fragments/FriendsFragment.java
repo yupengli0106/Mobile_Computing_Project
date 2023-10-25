@@ -19,8 +19,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.adapters.FriendRequestsAdapter;
+import com.example.adapters.FriendsAdapter;
 import com.example.adapters.UsersAdapter;
 import com.example.helpers.FirebaseHelper;
+import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
 import com.example.model.User;
 import com.example.zenly.R;
@@ -40,6 +42,8 @@ public class FriendsFragment extends Fragment {
     private UsersAdapter usersAdapter;
 
     private FriendRequestsAdapter friendRequestsAdapter;
+
+    private FriendsAdapter friendsAdapter;
 
     private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
@@ -80,6 +84,14 @@ public class FriendsFragment extends Fragment {
         SearchBar searchBar = view.findViewById(R.id.search_bar);
         SearchView searchView = view.findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+
+        RecyclerView friendListView = view.findViewById(R.id.friends_list);
+        friendListView.setLayoutManager(new LinearLayoutManager(getContext()));
+        friendsAdapter = new FriendsAdapter(new ArrayList<>());
+        friendListView.setAdapter(friendsAdapter);
+        FriendManager.getInstance().getFriendsList().observe(getViewLifecycleOwner(), friendList -> {
+            friendsAdapter.setFriendList(friendList);
+        });
     }
 
     @Override
