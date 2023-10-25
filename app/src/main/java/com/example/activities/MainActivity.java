@@ -16,6 +16,7 @@ import com.example.helpers.FirebaseHelper;
 import com.example.managers.FriendRequestManager;
 import com.example.model.FriendRequest;
 import com.example.zenly.R;
+import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
@@ -30,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private final ProfileFragment profileFragment = new ProfileFragment();
     private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
+    private BadgeDrawable friendRequestsBadge;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
         // initialize bottom navigation view
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        //set badge for friends_nav(request)
+        friendRequestsBadge = bottomNavigationView.getOrCreateBadge(R.id.nav_friends);
+
 
         // set map fragment as default fragment
         fragmentManager.beginTransaction().replace(R.id.fragment_container, mapFragment).commit();
@@ -48,6 +54,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFriendRequestReceived(List<FriendRequest> friendRequests) {
                 FriendRequestManager.getInstance().setFriendRequests(friendRequests);
+                //update the badge
+                if (friendRequestsBadge != null) {
+                    if (friendRequests.size() == 0) {
+                        friendRequestsBadge.setVisible(false);
+                    } else {
+                        friendRequestsBadge.setNumber(friendRequests.size());
+                        friendRequestsBadge.setVisible(true);
+                    }
+
+                }
             }
 
             @Override

@@ -8,7 +8,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/friend_requests"
-        android:layout_width="290dp"
+        android:layout_width="270dp"
         android:layout_height="300dp"
         android:layout_marginTop="16dp" />
 

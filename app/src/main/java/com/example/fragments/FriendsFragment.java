@@ -6,11 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,6 +24,9 @@ import com.example.helpers.FirebaseHelper;
 import com.example.managers.FriendRequestManager;
 import com.example.model.User;
 import com.example.zenly.R;
+import com.google.android.material.badge.BadgeDrawable;
+import com.google.android.material.badge.BadgeUtils;
+import com.google.android.material.badge.ExperimentalBadgeUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
@@ -30,13 +35,15 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@OptIn(markerClass = ExperimentalBadgeUtils.class)
 public class FriendsFragment extends Fragment {
     private UsersAdapter usersAdapter;
 
     private FriendRequestsAdapter friendRequestsAdapter;
 
     private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+
+    private BadgeDrawable badgeDrawable;
 
 
     @Override
@@ -61,15 +68,37 @@ public class FriendsFragment extends Fragment {
         addFriendButton.setOnClickListener(v -> showAddFriendDialog());
 
         ImageButton notificationButton = view.findViewById(R.id.button_notifications);
-        FriendRequestManager.getInstance().getFriendRequests().observe(getViewLifecycleOwner(), friendRequests -> {
-            friendRequestsAdapter.setFriendRequests(friendRequests);
-        });
+        FrameLayout frameLayoutParent = (FrameLayout) notificationButton.getParent();
+        badgeDrawable = BadgeDrawable.create(requireContext());
+        BadgeUtils.attachBadgeDrawable(badgeDrawable, notificationButton, frameLayoutParent);
+        badgeDrawable.setVerticalOffset(60);
+        badgeDrawable.setHorizontalOffset(-90);
+
+
         notificationButton.setOnClickListener(v -> showFriendRequestsDialog());
 
         SearchBar searchBar = view.findViewById(R.id.search_bar);
         SearchView searchView = view.findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        FriendRequestManager.getInstance().getFriendRequests().observe(getViewLifecycleOwner(), friendRequests -> {
+            friendRequestsAdapter.setFriendRequests(friendRequests);
+            if (badgeDrawable != null) {
+                if (friendRequests.size() == 0) {
+                    badgeDrawable.setVisible(false);
+                } else {
+//                    badgeDrawable.setNumber(friendRequests.size());
+                    badgeDrawable.setVisible(true);
+                }
+            }
+        });
+
+    }
+
 
     private void showAddFriendDialog() {
 
@@ -144,6 +173,4 @@ public class FriendsFragment extends Fragment {
         dialog.show();
 
     }
-
-
 }

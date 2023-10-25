@@ -22,14 +22,22 @@
                 android:layout_gravity="end|center_vertical"
                 android:orientation="horizontal">
 
-                <ImageButton
-                    android:id="@+id/button_notifications"
+                <FrameLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_notifications"
-                    android:padding="12dp"
-                    android:layout_marginEnd="0dp" />
+                    android:layout_gravity="end|center_vertical">
+
+                    <ImageButton
+                        android:id="@+id/button_notifications"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_notifications"
+                        android:padding="12dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_gravity="center" />
+
+                </FrameLayout>
 
                 <Button
                     android:id="@+id/button_add_friend"
