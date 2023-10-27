@@ -125,4 +125,20 @@ public class FirebaseHelper implements Serializable {
                 .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
+    /**
+     * reset the password of the user with the given email by Firebase Authentication
+     * @param email the email of the user
+     * @param callback the callback function
+     */
+    public void resetPassword(String email, final AuthCallback callback) {
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onSuccess();
+                    } else {
+                        callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+                    }
+                });
+    }
+
 }
