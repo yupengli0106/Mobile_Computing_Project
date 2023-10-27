@@ -14,8 +14,10 @@ import com.example.fragments.MapFragment;
 import com.example.fragments.DiscussionsFragment;
 import com.example.fragments.ProfileFragment;
 import com.example.helpers.FirebaseHelper;
+import com.example.managers.DiscussionsManager;
 import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
+import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.zenly.R;
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private final ChatFragment chatFragment = new ChatFragment();
     private final FriendsFragment friendsFragment = new FriendsFragment();
     private final ProfileFragment profileFragment = new ProfileFragment();
-    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     private BadgeDrawable friendRequestsBadge;
 
@@ -95,6 +97,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        firebaseHelper.getDiscussions(new FirebaseHelper.DiscussionsCallback() {
+            @Override
+            public void onCallback(List<Discussion> discussions) {
+                DiscussionsManager.getInstance().setDiscussions(discussions);
+            }
+        });
+
+
+        firebaseHelper.listenForNewDiscussions(new FirebaseHelper.NewDiscussionsCallback() {
+            @Override
+            public void onNewConversationAdded(Discussion newDiscussion) {
+                DiscussionsManager.getInstance().addNewDiscussion(newDiscussion);
+                Log.d("Discussions Updated", "Updated discussions:");
+            }
+
+            @Override
+            public void onNewConversationsError(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the conversation: " + e.getMessage(), Toast.LENGTH_LONG)
+                        .show();
+            }
+        });
+
+//        firebaseHelper.listenForNewMessagesInDiscussions(new FirebaseHelper.NewMessageCallback() {
+//            @Override
+//            public void onNewMessagesReceived(List<Message> messages) {
+//                MessagesManager.getInstance().setMessages(messages);
+//                Log.d("Messages Updated", "Updated messages:");
+//                for (Message message : messages) {
+//                    Log.d("Messages Updated", "Message: " + message.toString());
+//                }
+//            }
+//
+//            @Override
+//            public void onMessageError(Exception e) {
+//                Toast.makeText(MainActivity.this, "cannot load conversation: " + e.getMessage(), Toast.LENGTH_LONG)
+//                        .show();
+//            }
+//        });
+
         // setOnNavigationItemSelectedListener
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
@@ -102,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_map) {
                 selectedFragment = new MapFragment();
             } else if (itemId == R.id.nav_chat) {
-                selectedFragment = chatFragment;
+                selectedFragment = discussionsFragment;
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = profileFragment;
             } else if (itemId == R.id.nav_friends) {

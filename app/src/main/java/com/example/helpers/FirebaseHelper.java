@@ -3,12 +3,16 @@ package com.example.helpers;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.model.LocationData;
+import com.example.model.Message;
 import com.example.model.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,15 +33,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * It is used for CRUD operations on the database.
  */
 public class FirebaseHelper implements Serializable {
+
+    private static final String TAG = "FirebaseHelper";
+
     public interface AuthCallback {
         void onSuccess();
 
         void onFailure(String errorMessage);
     }
 
-    public interface UsersCallback {
-        void onCallback(List<User> users);
-    
+    public interface DiscussionsCallback {
+        void onCallback(List<Discussion> discussions);
+    }
+
     public interface UserSearchCallback {
         void onUserFound(List<User> users);
 
@@ -82,6 +90,9 @@ public class FirebaseHelper implements Serializable {
     private final DatabaseReference locationsRef;
     // Firebase Realtime Database URL
     private final DatabaseReference friendRequestsRef;
+
+    private final DatabaseReference discussionsRef;
+
     private static final String URL = "https://mobile-computing-ef31f-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
 
@@ -97,6 +108,7 @@ public class FirebaseHelper implements Serializable {
         usersRef = myDatabase.child("users");
         locationsRef = myDatabase.child("locations");
         friendRequestsRef = myDatabase.child("friendRequests");
+        discussionsRef = myDatabase.child("discussions");
     }
 
     /**
@@ -123,6 +135,16 @@ public class FirebaseHelper implements Serializable {
      */
     protected Object readResolve() {
         return getInstance();
+    }
+
+    /**
+     * Get the current user's uid
+     *
+     * @return the current user's uid
+     */
+    @Nullable
+    public String getCurrentUserId() {
+        return mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : null;
     }
 
     /**
@@ -178,23 +200,239 @@ public class FirebaseHelper implements Serializable {
                 .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
-
-    public void getUsers(UsersCallback callback) {
-        List<User> users = new ArrayList<>();
-        usersRef.get().addOnCompleteListener(task -> {
+    public void getDiscussions(DiscussionsCallback callback) {
+        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        List<Discussion> discussions = new ArrayList<>();
+        usersRef.child(currentUser).child("discussions").get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null) {
-                Log.d("getUsers", "getUsers: success");
+                Log.d("getDiscussions", "getDiscussions: success");
                 for (DataSnapshot snapshot : task.getResult().getChildren()) {
-                    User user = snapshot.getValue(User.class);
-                    users.add(user);
+                    Discussion discussion = snapshot.getValue(Discussion.class);
+                    discussions.add(discussion);
                 }
-                callback.onCallback(users);
+                callback.onCallback(discussions);
             } else {
-                Log.w("getUsers", "getUsers: failure", task.getException());
+                Log.w("getDiscussions", "getDiscussions: failure", task.getException());
                 callback.onCallback(null); // or an empty list
             }
         });
     }
+
+    public void getConversationMessages(String discussionId, final MessagesCallback callback) {
+        List<Message> messages = new ArrayList<>();
+        discussionsRef.child(discussionId).child("messages").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Log.d("getMessages", "getMessages: success");
+                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+                    Message message = snapshot.getValue(Message.class);
+                    messages.add(message);
+                }
+                callback.onCallback(messages);
+            } else {
+                Log.w("getMessages", "getMessages: failure", task.getException());
+                callback.onCallback(null); // or an empty list
+            }
+        });
+    }
+
+    public interface MessagesCallback {
+        void onCallback(List<Message> messages);
+    }
+
+    public void getConversationsMessages(final MessagesCallback callback) {
+
+    }
+
+    public void createDiscussion(String fromUserId, String toUserId, String toUserName, final AuthCallback callback) {
+        String discussionId = usersRef.child(fromUserId).child("discussions").push().getKey();
+
+        // get fromUserName
+        usersRef.child(fromUserId).child("username").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                String fromUserName = task.getResult().getValue(String.class);
+                Log.d(TAG, "createDiscussion: " + fromUserId + " " + fromUserName + " " + toUserId + " " + toUserName + " " + discussionId);
+                if (discussionId == null) {
+                    callback.onFailure("Failed to create discussion");
+                    return;
+                }
+                HashMap<String, Object> senderDiscussion = new HashMap<>();
+                senderDiscussion.put("receiverId", toUserId);
+                senderDiscussion.put("receiverUserName", toUserName);
+                senderDiscussion.put("discussionId", discussionId);
+
+                HashMap<String, Object> receiverDiscussion = new HashMap<>();
+                receiverDiscussion.put("discussionId", discussionId);
+                receiverDiscussion.put("receiverId", fromUserId);
+                receiverDiscussion.put("receiverUserName", fromUserName);
+
+                discussionsRef.child(discussionId).setValue(senderDiscussion)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("FirebaseHelper", "Discussion created successfully.");
+                            callback.onSuccess();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+                        });
+
+                usersRef.child(fromUserId).child("discussions").child(discussionId).setValue(senderDiscussion)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("FirebaseHelper", "Discussion created successfully.");
+                            callback.onSuccess();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+                        });
+                usersRef.child(toUserId).child("discussions").child(discussionId).setValue(receiverDiscussion)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("FirebaseHelper", "Discussion created successfully.");
+                            callback.onSuccess();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+                        });
+            } else {
+                Log.w("getMessages", "getMessages: failure", task.getException());
+                callback.onFailure("Failed to create discussion: " + task.getException().getMessage());
+            }
+        });
+    }
+
+    public void listenForNewDiscussions(NewDiscussionsCallback callback) {
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        Query newConversationQuery = usersRef.child(currentUserId).child("discussions");
+        ChildEventListener childEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+                Discussion discussion = dataSnapshot.getValue(Discussion.class);
+                String discussionId = dataSnapshot.getKey();
+
+                if (discussion != null) {
+                    discussion.setDiscussionId(discussionId);
+                    callback.onNewConversationAdded(discussion);
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+                // Handle changes if needed
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                // Handle removal if needed
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+                // Handle moves if needed
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onNewConversationsError(databaseError.toException());
+            }
+        };
+
+        newConversationQuery.addChildEventListener(childEventListener);
+    }
+
+    public interface NewDiscussionsCallback {
+        void onNewConversationAdded(Discussion newDiscussion);
+
+        void onNewConversationsError(Exception exception);
+    }
+
+    public void sendMessage(String discussionId, String receiverId, String content, final AuthCallback callback) {
+        String messageId = discussionsRef.child(discussionId).child("messages").push().getKey();
+
+        if (messageId == null) {
+            callback.onFailure("Failed to send message");
+            return;
+        }
+        String senderId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        HashMap<String, Object> messageMap = new HashMap<>();
+        messageMap.put("messageId", messageId);
+        messageMap.put("senderId", senderId);
+        messageMap.put("receiverId", receiverId);
+        messageMap.put("content", content);
+        messageMap.put("dateTime", String.valueOf(System.currentTimeMillis()));
+
+        discussionsRef.child(discussionId).child("messages").child(messageId).setValue(messageMap)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FirebaseHelper", "Message sent successfully.");
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FirebaseHelper", "Failed to send message.", e);
+                    callback.onFailure("Failed to send message: " + e.getMessage());
+                });
+    }
+
+    public void listenForMessagesInDiscussion(String discussionId, NewMessageCallback callback) {
+        DatabaseReference messagesRef = discussionsRef.child(discussionId).child("messages");
+        messagesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Message> newMessages = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Message message = snapshot.getValue(Message.class);
+                    String messageId = snapshot.getKey();
+
+                    if (message != null) {
+                        message.setMessageId(messageId);
+                        newMessages.add(message);
+                    }
+                }
+                callback.onNewMessagesReceived(newMessages);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onMessageError(databaseError.toException());
+            }
+        });
+    }
+
+    public void listenForNewMessagesInDiscussions(NewMessageCallback callback) {
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        // Step 1: Identify the discussions that the current user is involved in
+        Query userDiscussionsQuery = usersRef.child(currentUserId).child("discussions");
+        userDiscussionsQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String discussionId = snapshot.getKey();
+                    listenForMessagesInDiscussion(discussionId, callback);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onMessageError(databaseError.toException());
+            }
+        });
+    }
+
+    public interface NewMessageCallback {
+
+        /**
+         * Callback triggered when new messages are received for a discussion.
+         *
+         * @param messages The list of new messages received.
+         */
+        void onNewMessagesReceived(List<Message> messages);
+
+        /**
+         * Callback triggered in case of any error while fetching new messages.
+         *
+         * @param exception The exception representing the error.
+         */
+        void onMessageError(Exception exception);
+    }
+
     public void searchUsers(String keyword, final UserSearchCallback callback) {
         Query searchQuery = usersRef.orderByChild("username").startAt(keyword).endAt(keyword + "\uf8ff");
 
@@ -279,7 +517,6 @@ public class FirebaseHelper implements Serializable {
             }
         });
     }
-
 
     public void getUserProfile(String userId, final UserProfileCallback callback) {
         DatabaseReference userReference = usersRef.child(userId);

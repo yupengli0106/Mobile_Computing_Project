@@ -1,67 +1,70 @@
 package com.example.adapters;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.model.Discussion;
+import com.example.model.Friend;
 import com.example.model.User;
 import com.example.zenly.R;
 
 import java.util.List;
 
-public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.UserViewHolder> {
+public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.DiscussionViewHolder> {
+    private List<Discussion> discussions;
+    public interface OnDiscussionClickListener {
+        void onDiscussionClick(Discussion discussion);
+    }
+    private OnDiscussionClickListener listener;
 
-    private final List<User> users;
-
-    public DiscussionsAdapter(List<User> users) {
-        this.users = users;
+    public DiscussionsAdapter(List<Discussion> discussions, OnDiscussionClickListener listener) {
+        this.discussions = discussions;
+        this.listener = listener;
     }
 
-    @NonNull
-    @Override
-    public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//        ItemContainerChatUserBinding itemContainerChatUserBinding = ItemContainerChatUserBinding.inflate(
-//                LayoutInflater.from(parent.getContext()),
-//                parent,
-//                false
-//        );
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(
-                R.layout.item_container_chat_user,
-                parent,
-                false
-        );
-        return new UserViewHolder(itemView);
+    public DiscussionViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        // create a new view
+        View itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_discussion_list, parent, false);
+        return new DiscussionViewHolder(itemView, discussions, listener);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
-        holder.setUserData(users.get(position));
+    public void onBindViewHolder(DiscussionsAdapter.DiscussionViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        Discussion discussion = discussions.get(position);
+        holder.userName.setText(discussion.getReceiverUserName());
     }
+
 
     @Override
     public int getItemCount() {
-        return users.size();
+        return discussions.size();
     }
 
-    static class UserViewHolder extends RecyclerView.ViewHolder {
+    public static class DiscussionViewHolder extends RecyclerView.ViewHolder {
         public TextView userName;
-        public UserViewHolder(View itemView) {
-            super(itemView);
-            userName = itemView.findViewById(R.id.textUsername);
-        }
 
-        void setUserData(User user) {
-            userName.setText(user.getUsername());
-//            binding.lastMessage.setText(user.getLastMessage());
-//            binding.imageProfile.setImageBitmap(getUserImage(user.getImage()));
+        public DiscussionViewHolder(View itemView, List<Discussion> discussions, final OnDiscussionClickListener listener) {
+            super(itemView);
+            userName = itemView.findViewById(R.id.user_name);
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (listener != null && position != RecyclerView.NO_POSITION) {
+                    listener.onDiscussionClick(discussions.get(position));
+                }
+            });
         }
     }
-//    private Bitmap getUserImage(String encodedImage){
-//        byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
-//        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-//    }
+
+    public void setDiscussionList(List<Discussion> discussions) {
+        this.discussions = discussions;
+        notifyDataSetChanged();
+    }
+
+
 }

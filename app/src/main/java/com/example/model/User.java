@@ -1,19 +1,25 @@
 package com.example.model;
 
+import java.util.HashMap;
+import java.util.List;
+
 public class User {
     public String userId;
+
     public String username;
     public String email;
     public String password;
+    public HashMap<String, String> discussions;
 
     public User() {
         // Default constructor is required for Firebase
     }
 
-    public User(String username, String email, String password) {
+    public User(String username, String email, String password, HashMap<String, String> discussions) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.discussions = discussions;
     }
 
     public String getUserId() {
@@ -48,5 +54,11 @@ public class User {
         this.password = password;
     }
 
+    public HashMap<String,String> getDiscussions() {
+        return discussions;
+    }
 
+    public void setDiscussions(HashMap<String,String> discussions) {
+        this.discussions = discussions;
+    }
 }

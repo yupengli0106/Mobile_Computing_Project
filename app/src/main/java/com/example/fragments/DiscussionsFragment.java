@@ -3,30 +3,39 @@ package com.example.fragments;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.adapters.DiscussionsAdapter;
-import com.example.helpers.FirebaseHelper;
-import com.example.model.User;
+import com.example.adapters.NewDiscussionAdapter;
+import com.example.managers.DiscussionsManager;
+import com.example.managers.FriendManager;
+import com.example.model.Discussion;
 import com.example.zenly.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.util.List;
+import java.util.ArrayList;
 
-public class DiscussionsFragment extends Fragment {
+public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.OnDiscussionClickListener{
 
-    private final String TAG = "UsersFragment";
+    private final String TAG = "DiscussionsFragment";
+
+    private NewDiscussionAdapter newDiscussionAdapter;
 
     public DiscussionsFragment() {
         // Required empty public constructor
     }
 
-    public static DiscussionsFragment newInstance(String param1, String param2) {
+    public static DiscussionsFragment newInstance() {
         DiscussionsFragment fragment = new DiscussionsFragment();
         Bundle args = new Bundle();
         return fragment;
@@ -47,48 +56,48 @@ public class DiscussionsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        getUsers(view);
+
+        Button newDiscussionButton = view.findViewById(R.id.button_add_friend);
+        newDiscussionButton.setOnClickListener(v -> showNewDiscussionDialog());
+
+        RecyclerView discussionRecyclerView = view.findViewById(R.id.discussions_list);
+        discussionRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        DiscussionsAdapter discussionsAdapter = new DiscussionsAdapter(new ArrayList<>(), this);
+        discussionRecyclerView.setAdapter(discussionsAdapter);
+        DiscussionsManager.getInstance().getDiscussions().observe(getViewLifecycleOwner(), discussionsAdapter::setDiscussionList);
     }
 
-    public interface UsersCallback {
-        void onCallback(List<User> users);
-    }
+    private void showNewDiscussionDialog() {
 
-    private void getUsers(@NonNull View view) {
-        FirebaseHelper db = FirebaseHelper.getInstance();
-//        List< User > users = db.getUsers();
-//        Log.d(TAG, "getUsers: users: " + users.size() + " users: " + users.toString());
-//        RecyclerView userRecyclerView = view.findViewById(R.id.usersRecyclerView);
-//        if (users.size() > 0) {
-//            Log.d(TAG, "getUsers: going in");
-//            userRecyclerView.setAdapter(new UserAdapter(users));
-//            userRecyclerView.setVisibility(View.VISIBLE);
-//        } else {
-//            Log.d(TAG, "getUsers: lol not going");
-//            userRecyclerView.setVisibility(View.GONE);
-//        }
-        db.getUsers(new FirebaseHelper.UsersCallback() {
-            @Override
-            public void onCallback(List<User> users) {
-                Log.d(TAG, "getUsers: users: " + (users != null ? users.size() : 0));
-                RecyclerView userRecyclerView = view.findViewById(R.id.usersRecyclerView);
-                if (users != null && !users.isEmpty()) {
-                    Log.d(TAG, "getUsers: going in");
-                    userRecyclerView.setAdapter(new DiscussionsAdapter(users));
-                    userRecyclerView.setVisibility(View.VISIBLE);
-                } else {
-                    Log.d(TAG, "getUsers: lol not going");
-                    userRecyclerView.setVisibility(View.GONE);
-                }
-            }
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_new_discussion, null);
+
+        RecyclerView friendListView = dialogView.findViewById(R.id.friend_list);
+        friendListView.setLayoutManager(new LinearLayoutManager(getContext()));
+        newDiscussionAdapter = new NewDiscussionAdapter(new ArrayList<>());
+        friendListView.setAdapter(newDiscussionAdapter);
+        FriendManager.getInstance().getFriendsList().observe(getViewLifecycleOwner(), friends -> {
+            newDiscussionAdapter.setFriends(friends);
         });
+
+        builder.setView(dialogView)
+                .setTitle("Start Discussion")
+                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+
+        AlertDialog dialog = builder.create();
+
+        dialog.show();
     }
 
-//    private void isLoading(Boolean isLoading) {
-//        if (isLoading) {
-//            binding.progressBar.setVisibility(View.VISIBLE);
-//        } else {
-//            binding.progressBar.setVisibility(View.GONE);
-//        }
-//    }
+    @Override
+    public void onDiscussionClick(Discussion discussion) {
+        Log.d(TAG, "onDiscussionClick: " + discussion);
+        Toast.makeText(getContext(), "Clicked on " + discussion, Toast.LENGTH_SHORT).show();
+        DiscussionDetailFragment detailFragment = DiscussionDetailFragment.newInstance(discussion);
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, detailFragment)
+                .addToBackStack(null)
+                .commit();
+    }
 }
