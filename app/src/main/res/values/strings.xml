@@ -9,6 +9,15 @@
     <string name="zenly_clone">Zenly Clone</string>
     <string name="go_to_login">Go to Login</string>
     <string name="go_to_register">Go to Register</string>
+    <string name="chat">Chat</string>
+    <string name="friends">Friends</string>
     <string name="map">Map</string>
+
+    <string name="profile">Profile</string>
+    <string name="add_friend">ADD FRIEND</string>
+    <string name="search_friends">search friends</string>
+    <string name="search_users">search users</string>
+
     <string name="forgot_your_password">Forgot your password?</string>
+
 </resources>

@@ -1,15 +1,16 @@
 package com.example.model;
 
-public class User {
-    public String userId;
-    public String username;
-    public String email;
+public class Friend {
+    private String userId;
+    private String username;
+    private String email;
+    
+    public Friend() {
 
-    public User() {
-        // Default constructor is required for Firebase
     }
 
-    public User(String username, String email) {
+    public Friend(String userId, String username, String email) {
+        this.userId = userId;
         this.username = username;
         this.email = email;
     }
@@ -38,5 +39,12 @@ public class User {
         this.email = email;
     }
 
-
+    @Override
+    public String toString() {
+        return "Friend{" +
+                "userId='" + userId + '\'' +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
 }
