@@ -68,6 +68,12 @@ public class FirebaseHelper implements Serializable {
         void onFailed(Exception e);
     }
 
+    public interface DeletionCallback {
+        void onSuccess();
+
+        void onFailure(String errorMessage);
+    }
+
     // Singleton pattern
     private static volatile FirebaseHelper instance;
     // Firebase Authentication instance
@@ -396,11 +402,50 @@ public class FirebaseHelper implements Serializable {
         }
     }
 
+    public void deleteFriend(String friendId, final DeletionCallback callback) {
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
+        DatabaseReference currentUserFriendsRef = usersRef.child(currentUserId).child("friends");
+        currentUserFriendsRef.orderByValue().equalTo(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+
+                    DatabaseReference friendRef = usersRef.child(currentUserId).child("friends").child(childSnapshot.getKey());
+                    friendRef.removeValue()
+                            .addOnSuccessListener(aVoid ->
+                                    usersRef.child(friendId).child("friends").orderByValue().equalTo(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshotFriend) {
+                                            for (DataSnapshot childSnapshotFriend : dataSnapshotFriend.getChildren()) {
+                                                usersRef.child(friendId).child("friends").child(childSnapshotFriend.getKey()).removeValue()
+                                                        .addOnSuccessListener(aVoidInner -> callback.onSuccess())
+                                                        .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+                                            callback.onFailure(databaseError.getMessage());
+                                        }
+                                    })
+                            )
+                            .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                callback.onFailure(databaseError.getMessage());
+            }
+        });
+    }
 
 
     /**
      * reset the password of the user with the given email by Firebase Authentication
-     * @param email the email of the user
+     *
+     * @param email    the email of the user
      * @param callback the callback function
      */
     public void resetPassword(String email, final AuthCallback callback) {

@@ -43,4 +43,19 @@ public class FriendManager {
         return false;
     }
 
+    public List<Friend> searchFriends(String query) {
+        List<Friend> matchedFriends = new ArrayList<>();
+        List<Friend> allFriends = friendsListLiveData.getValue();
+
+        if (allFriends != null && !query.isEmpty()) {
+            for (Friend friend : allFriends) {
+                if (friend.getUsername() != null && friend.getUsername().toLowerCase().contains(query.toLowerCase())) {
+                    matchedFriends.add(friend);
+                }
+            }
+        }
+
+        return matchedFriends;
+    }
+
 }
