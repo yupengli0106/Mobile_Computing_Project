@@ -19,5 +19,6 @@
     <string name="search_users">search users</string>
 
     <string name="forgot_your_password">Forgot your password?</string>
+    <string name="logout">Logout</string>
 
 </resources>
