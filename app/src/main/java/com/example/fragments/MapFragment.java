@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.activities.LoginActivity;
+import com.example.managers.FriendManager;
+import com.example.model.Friend;
 import com.example.zenly.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -34,6 +36,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.gms.maps.model.Marker;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class MapFragment extends Fragment {
     private final String TAG = "MapFragmentLog";
@@ -58,6 +63,7 @@ public class MapFragment extends Fragment {
     private boolean isFirstLoad = true;
     // Firebase user
     private FirebaseUser currentUser = null;
+    private FriendManager friendManager;
 
 
     // callback method for when the map is ready
@@ -122,6 +128,7 @@ public class MapFragment extends Fragment {
         DatabaseReference myDatabase = FirebaseDatabase.getInstance().getReference();
         FirebaseAuth myAuth = FirebaseAuth.getInstance();
         currentUser = myAuth.getCurrentUser();
+        friendManager = FriendManager.getInstance();
 
         if (currentUser != null) {  // check if the user is logged in
             // get the reference to the locations node
@@ -151,12 +158,27 @@ public class MapFragment extends Fragment {
         myValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onDataChange: Total Users: " + dataSnapshot.getChildrenCount());
+                // get the list of friends of the current user
+                List<Friend> currentFriends = friendManager.getFriendsList().getValue();
+                // use a HashSet to store the user IDs of all friends
+                Set<String> friendIds = new HashSet<>();
 
-                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) { // traverse all users
-                    Log.d(TAG, "onDataChange: User ID: " + userSnapshot.getKey());
-                    Log.d(TAG, "onDataChange: User Data: " + userSnapshot.getValue());
-                    handleNewLocation(userSnapshot);
+                if (currentFriends != null) {
+                    for (Friend friend : currentFriends) {
+                        // add the user ID of each friend to the HashSet
+                        friendIds.add(friend.getUserId());
+                    }
+                }
+
+                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    if (userId != null) {
+                        if (currentUser != null && userId.equals(currentUser.getUid())) {
+                            handleNewLocation(userSnapshot);  // update the current user's location
+                        } else if (friendIds.contains(userId)) {
+                            handleNewLocation(userSnapshot);  // update the location of friends
+                        }
+                    }
                 }
             }
 
