@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        firebaseHelper.listenForNewDiscussions(new FirebaseHelper.NewDiscussionsCallback() {
+        firebaseHelper.listenForNewDiscussions(DiscussionsManager.getInstance(), new FirebaseHelper.NewDiscussionsCallback() {
             @Override
             public void onNewConversationAdded(Discussion newDiscussion) {
                 DiscussionsManager.getInstance().addNewDiscussion(newDiscussion);
@@ -119,22 +119,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        firebaseHelper.listenForNewMessagesInDiscussions(new FirebaseHelper.NewMessageCallback() {
-//            @Override
-//            public void onNewMessagesReceived(List<Message> messages) {
-//                MessagesManager.getInstance().setMessages(messages);
-//                Log.d("Messages Updated", "Updated messages:");
-//                for (Message message : messages) {
-//                    Log.d("Messages Updated", "Message: " + message.toString());
-//                }
-//            }
-//
-//            @Override
-//            public void onMessageError(Exception e) {
-//                Toast.makeText(MainActivity.this, "cannot load conversation: " + e.getMessage(), Toast.LENGTH_LONG)
-//                        .show();
-//            }
-//        });
+        firebaseHelper.listenForLastMessageUpdate(DiscussionsManager.getInstance());
+
 
         // setOnNavigationItemSelectedListener
         bottomNavigationView.setOnItemSelectedListener(item -> {

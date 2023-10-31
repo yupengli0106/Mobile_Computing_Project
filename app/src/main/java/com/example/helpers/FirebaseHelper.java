@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.example.managers.DiscussionsManager;
 import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.FriendRequest;
@@ -300,7 +301,7 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
-    public void listenForNewDiscussions(NewDiscussionsCallback callback) {
+    public void listenForNewDiscussions(DiscussionsManager manager, NewDiscussionsCallback callback) {
         String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
         Query newConversationQuery = usersRef.child(currentUserId).child("discussions");
         ChildEventListener childEventListener = new ChildEventListener() {
@@ -312,6 +313,7 @@ public class FirebaseHelper implements Serializable {
                 if (discussion != null) {
                     discussion.setDiscussionId(discussionId);
                     callback.onNewConversationAdded(discussion);
+                    setDiscussionListener(discussionId, manager);
                 }
             }
 
@@ -345,6 +347,49 @@ public class FirebaseHelper implements Serializable {
         void onNewConversationsError(Exception exception);
     }
 
+    public void listenForLastMessageUpdate(DiscussionsManager manager) {
+        String currentUserId = mAuth.getCurrentUser().getUid();
+
+        usersRef.child(currentUserId).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
+                    String discussionId = discussionSnapshot.getKey();
+                    setDiscussionListener(discussionId, manager);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
+    }
+
+    private void setDiscussionListener(String discussionId, DiscussionsManager manager) {
+        discussionsRef.child(discussionId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Discussion discussion = dataSnapshot.getValue(Discussion.class);
+                if (discussion != null) {
+                    // Update your UI with the new discussion data, including the last message.
+                    manager.updateDiscussion(discussion);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
+    }
+
+    public interface LastMessageUpdateCallback {
+        void onLastMessageUpdated(String discussionId, Message lastMessage);
+
+        void onDiscussionError(Exception exception);
+    }
+
     public void sendMessage(String discussionId, String receiverId, String content, final AuthCallback callback) {
         String messageId = discussionsRef.child(discussionId).child("messages").push().getKey();
 
@@ -361,6 +406,16 @@ public class FirebaseHelper implements Serializable {
         messageMap.put("dateTime", String.valueOf(System.currentTimeMillis()));
 
         discussionsRef.child(discussionId).child("messages").child(messageId).setValue(messageMap)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("FirebaseHelper", "Message sent successfully.");
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FirebaseHelper", "Failed to send message.", e);
+                    callback.onFailure("Failed to send message: " + e.getMessage());
+                });
+
+        discussionsRef.child(discussionId).child("lastMessage").setValue(messageMap)
                 .addOnSuccessListener(aVoid -> {
                     Log.d("FirebaseHelper", "Message sent successfully.");
                     callback.onSuccess();
@@ -396,24 +451,9 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
-    public void listenForNewMessagesInDiscussions(NewMessageCallback callback) {
+    public void updateConversationLastTimeOpened(String discussionId) {
         String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        // Step 1: Identify the discussions that the current user is involved in
-        Query userDiscussionsQuery = usersRef.child(currentUserId).child("discussions");
-        userDiscussionsQuery.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    String discussionId = snapshot.getKey();
-                    listenForMessagesInDiscussion(discussionId, callback);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                callback.onMessageError(databaseError.toException());
-            }
-        });
+        usersRef.child(currentUserId).child("discussions").child(discussionId).child("lastTimeOpened").setValue(String.valueOf(System.currentTimeMillis()));
     }
 
     public interface NewMessageCallback {

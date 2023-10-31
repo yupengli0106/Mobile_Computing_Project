@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.example.adapters.DiscussionsAdapter;
 import com.example.adapters.NewDiscussionAdapter;
+import com.example.helpers.FirebaseHelper;
 import com.example.managers.DiscussionsManager;
 import com.example.managers.FriendManager;
 import com.example.model.Discussion;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.OnDiscussionClickListener{
 
     private final String TAG = "DiscussionsFragment";
+
+    private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     private NewDiscussionAdapter newDiscussionAdapter;
 
@@ -99,5 +102,6 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
                 .replace(R.id.fragment_container, detailFragment)
                 .addToBackStack(null)
                 .commit();
+        firebaseHelper.updateConversationLastTimeOpened(discussion.getDiscussionId());
     }
 }

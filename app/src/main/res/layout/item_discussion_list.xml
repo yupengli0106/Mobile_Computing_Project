@@ -44,6 +44,16 @@
             android:textColor="#000000"
             android:textSize="18sp" />
 
+        <TextView
+            android:id="@+id/unread_badge"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:text=""
+            android:background="@color/pink_500"
+            android:textColor="#000000"
+            android:textSize="18sp" />
+
     </LinearLayout>
 
     <com.google.android.material.divider.MaterialDivider
