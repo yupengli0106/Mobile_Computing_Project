@@ -1,5 +1,7 @@
 package com.example.activities;
 
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -120,5 +122,32 @@ public class MainActivity extends AppCompatActivity {
 
         });
     }
+
+    @Override
+    public void onBackPressed() {
+        // get the current fragment
+        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
+
+        // if the current fragment is one of the fragments that we want to handle onBackPressed
+        if (currentFragment instanceof MapFragment || currentFragment instanceof ChatFragment ||
+                currentFragment instanceof FriendsFragment || currentFragment instanceof ProfileFragment) {
+            // show an alert dialog to ask the user if they want to exit
+            new AlertDialog.Builder(this)
+                    .setTitle("Exit")
+                    .setMessage("Do you want to back to home screen?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        // if the user chooses to exit, then exit
+                        Intent intent = new Intent(Intent.ACTION_MAIN);
+                        intent.addCategory(Intent.CATEGORY_HOME);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
 }
 
