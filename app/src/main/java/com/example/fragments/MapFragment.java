@@ -197,53 +197,7 @@ public class MapFragment extends Fragment {
         }
     }
 
-
-    /**
-     * Handle new location of a user
-     * @param userSnapshot snapshot of the user
-     */
-    private void handleNewLocation(@NonNull DataSnapshot userSnapshot) {
-        // get the user ID
-        String userId = userSnapshot.getKey();
-
-        // get the user's location
-        Double latitudeValue = userSnapshot.child("latitude").getValue(Double.class);
-        double latitude = (latitudeValue != null) ? latitudeValue : 0.0;
-        Double longitudeValue = userSnapshot.child("longitude").getValue(Double.class);
-        double longitude = (longitudeValue != null) ? longitudeValue : 0.0;
-        Float speedValue = userSnapshot.child("speed").getValue(Float.class);
-        float speed = (speedValue != null) ? speedValue : 0.0f;
-        Long timestampValue = userSnapshot.child("timestamp").getValue(Long.class);
-        long timestamp = (timestampValue != null) ? timestampValue : 0L;// TODO: last update time
-        Integer batteryLevelValue = userSnapshot.child("batteryLevel").getValue(Integer.class);
-        int batteryLevel = (batteryLevelValue != null) ? batteryLevelValue : 0;
-
-        // create a LatLng object from the latitude and longitude values
-        LatLng newLocation = new LatLng(latitude, longitude);
-
-        // get the username of the user
-        DatabaseReference specificUserRef = userRef.child(userId);
-        specificUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                //TODO: TBD if the username can be changed and need to update the usernameCache
-                String username = usernameCache.get(userId);
-                if (username == null) {
-                    username = dataSnapshot.child("username").getValue(String.class);
-                    usernameCache.put(userId, username);
-                }
-                // update the marker on the map after getting the username
-                updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL, username, speed, batteryLevel);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d(TAG, "get username onCancelled: " + databaseError.getMessage());
-            }
-        });
-    }
-
-
+    
     /**
      * Handle new location of a user
      * 
