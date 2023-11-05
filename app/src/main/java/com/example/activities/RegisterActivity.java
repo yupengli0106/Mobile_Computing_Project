@@ -13,6 +13,9 @@ import com.example.helpers.FirebaseHelper;
 import com.example.model.User;
 import com.example.zenly.R;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 
 public class RegisterActivity extends AppCompatActivity {
     private EditText usernameEditText;
