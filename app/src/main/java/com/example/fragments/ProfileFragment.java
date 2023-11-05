@@ -16,6 +16,8 @@ import android.widget.TextView;
 import com.example.activities.WelcomeActivity;
 import com.example.model.User;
 import com.example.services.LocationService;
+import com.example.util.StepSPHelper;
+import com.example.util.StepUtil;
 import com.example.zenly.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -87,7 +89,8 @@ public class ProfileFragment extends Fragment {
         // Initialize TextViews
         TextView usernameTextView = view.findViewById(R.id.usernameTextView);
         TextView emailTextView = view.findViewById(R.id.emailTextView);
-
+        TextView tvStep=view.findViewById(R.id.tvStep);
+        tvStep.append(StepUtil.getTodayStep(getContext())+"");
 
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users");
         // get current user id
@@ -100,7 +103,7 @@ public class ProfileFragment extends Fragment {
                 if (user != null) {
                     String username = user.getUsername();
                     String email = user.getEmail();
-                    // 设置到 TextView
+                    // set context to TextView
                     usernameTextView.setText("Username: " + username);
                     emailTextView.setText("Email: " + email);
                 }
