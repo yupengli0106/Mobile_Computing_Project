@@ -1,9 +1,13 @@
 package com.example.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.helpers.FirebaseHelper;
 import com.example.services.LocationService;
+import com.example.util.StepService;
 import com.example.zenly.R;
 
 public class LoginActivity extends AppCompatActivity {
@@ -36,8 +41,25 @@ public class LoginActivity extends AppCompatActivity {
 
         // set the forgot password text view to show the reset password dialog
         forgotPasswordTextView.setOnClickListener(v -> showResetPasswordDialog());
+        requestPermission();
     }
 
+    private void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Log.d("TAG", "ACTIVITY_RECOGNITION");
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACTIVITY_RECOGNITION)) {
+                    Log.d("TAG", "ACTIVITY_RECOGNITION");
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, 1);
+                    Log.d("TAG", "ACTIVITY_RECOGNITION");
+                }
+            } else {
+                Log.d("TAG", "ACTIVITY_RECOGNITION ready");
+                initStepService();
+            }
+        }
+    }
 
     /**
      * callback method for login button
@@ -93,6 +115,14 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void initStepService() {
+        Intent intent = new Intent(this, StepService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
 
     private void showResetPasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
