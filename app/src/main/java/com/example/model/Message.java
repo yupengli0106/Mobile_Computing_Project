@@ -18,6 +18,7 @@ public class Message {
         this.content = content;
         this.dateTime = dateTime;
     }
+
     public String getSenderId() {
         return senderId;
     }
@@ -45,6 +46,7 @@ public class Message {
     public Long getTimestamp() {
         return Long.parseLong(dateTime);
     }
+
     public String getFormattedDateTime() {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM. dd, yyyy - hh:mm a", Locale.US);
         return sdf.format(new Date(getTimestamp()));

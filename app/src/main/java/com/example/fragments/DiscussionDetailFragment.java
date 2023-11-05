@@ -67,24 +67,10 @@ public class DiscussionDetailFragment extends Fragment {
         Button sendButton = view.findViewById(R.id.send_button);
         Button backButton = view.findViewById(R.id.back_button);
         TextView receiverIdTextView = view.findViewById(R.id.receiver_text_view);
-        TextView userAvatarTextView = view.findViewById(R.id.user_avatar);
+
         String receiverID = discussion.getOtherParticipantIDs(currentUserID).get(0);
-
-        firebaseHelper.usersRef.child(receiverID).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String username = dataSnapshot.child("username").getValue(String.class); // Assuming the field is named "username"
-                receiverIdTextView.setText(username);
-                userAvatarTextView.setText(username.substring(0, 1).toUpperCase());
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle error
-                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
-            }
-        });
-
+        String receiverUsername = discussion.getOtherParticipantDetails(currentUserID).get(receiverID).get("username").toString();
+        receiverIdTextView.setText(receiverUsername);
 
         EditText messageInput = view.findViewById(R.id.message_input);
 
@@ -116,7 +102,7 @@ public class DiscussionDetailFragment extends Fragment {
             @Override
             public void onNewMessagesReceived(List<Message> messages) {
                 MessagesManager.getInstance().setMessages(messages);
-                if (messagesRecyclerView.getAdapter() != null && messagesRecyclerView.getAdapter().getItemCount() > 0)  {
+                if (messagesRecyclerView.getAdapter() != null && messagesRecyclerView.getAdapter().getItemCount() > 0) {
                     int lastPosition = messagesRecyclerView.getAdapter().getItemCount() - 1;
                     messagesRecyclerView.smoothScrollToPosition(lastPosition);
                 }

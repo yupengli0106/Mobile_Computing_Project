@@ -19,7 +19,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     private static final int VIEW_TYPE_SENT = 1;
     private static final int VIEW_TYPE_RECEIVED = 2;
 
-    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
     private String currentUserId = firebaseHelper.getCurrentUserId(); // Replace this with the ID of the logged-in user.
     private List<Message> messages;
 
@@ -71,18 +71,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         }
     }
 
-    public void updateMessages(List<Message> newMessages) {
-        this.messages = newMessages;
-        notifyDataSetChanged();
-    }
-
     public void setMessages(List<Message> messages) {
         Log.d(TAG, "setMessages: messages set");
         this.messages = messages;
         notifyDataSetChanged();
     }
 
-    public void setCurrentUserId(String userId) {
-        this.currentUserId = userId;
-    }
 }

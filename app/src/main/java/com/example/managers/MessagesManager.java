@@ -9,7 +9,6 @@ import com.example.helpers.FirebaseHelper;
 import com.example.model.Discussion;
 import com.example.model.Message;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -5,17 +5,13 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.managers.DiscussionsManager;
 import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.model.LocationData;
 import com.example.model.Message;
 import com.example.model.User;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -161,16 +157,15 @@ public class FirebaseHelper implements Serializable {
      * @param callback the callback function
      */
     public void registerUser(String email, String password, final User user, final AuthCallback callback) {
-        mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        String userId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-                        usersRef.child(userId).setValue(user);
-                        callback.onSuccess();
-                    } else {
-                        callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
-                    }
-                });
+        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String userId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+                usersRef.child(userId).setValue(user);
+                callback.onSuccess();
+            } else {
+                callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+            }
+        });
     }
 
     /**
@@ -181,14 +176,13 @@ public class FirebaseHelper implements Serializable {
      * @param callback the callback function
      */
     public void loginUser(String email, String password, final AuthCallback callback) {
-        mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
-                    }
-                });
+        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                callback.onFailure(Objects.requireNonNull(task.getException()).getMessage());
+            }
+        });
     }
 
     /**
@@ -200,531 +194,9 @@ public class FirebaseHelper implements Serializable {
         // get current user's uid from firebase authentication
         String uid = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
         // uid is the key of the location data in the database (locations node)
-        locationsRef.child(uid).setValue(locationData)
-                .addOnSuccessListener(unused -> Log.d("uploadLocation", "uploadLocation: success"))
-                .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
+        locationsRef.child(uid).setValue(locationData).addOnSuccessListener(unused -> Log.d("uploadLocation", "uploadLocation: success")).addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
-//    public void fetchAndListenToDiscussions(DiscussionsManager manager) {
-//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        usersRef.child(currentUser).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-//                    String discussionID = childSnapshot.getKey();
-//
-//                    // Fetch the discussion object (if needed)
-//                    discussionsRef.child(discussionID).addListenerForSingleValueEvent(new ValueEventListener() {
-//                        @Override
-//                        public void onDataChange(DataSnapshot discussionSnapshot) {
-//                            Discussion discussion = discussionSnapshot.getValue(Discussion.class);
-//                            // Add discussion to your manager
-//                            manager.addNewDiscussion(discussion);
-//                            // Set listener on the last message for this discussion
-//                            attachLastMessageListener(discussionID, manager);
-//                        }
-//
-//                        @Override
-//                        public void onCancelled(DatabaseError error) {
-//                            // Handle error here
-//                        }
-//                    });
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError error) {
-//                // Handle error here
-//            }
-//        });
-//    }
-//
-//    public void attachLastMessageListener(String discussionID, DiscussionsManager manager) {
-//        discussionsRef.child(discussionID).child("lastMessage").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                Message lastMessage = dataSnapshot.getValue(Message.class);
-//                manager.updateDiscussion(discussionID, lastMessage);
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError error) {
-//                // Handle error here
-//            }
-//        });
-//    }
-//
-//    public void listenForNewDiscussions(DiscussionsManager manager) {
-//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        usersRef.child(currentUser).child("discussions").addChildEventListener(new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-//                String newDiscussionID = dataSnapshot.getKey();
-//
-//                // Fetch the new discussion object (if needed)
-//                discussionsRef.child(newDiscussionID).addListenerForSingleValueEvent(new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(DataSnapshot discussionSnapshot) {
-//                        Discussion newDiscussion = discussionSnapshot.getValue(Discussion.class);
-//                        // Add new discussion to your manager
-//                        manager.addNewDiscussion(newDiscussion);
-//                        // Attach a listener on the last message for this new discussion
-//                        attachLastMessageListener(newDiscussionID, manager);
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError error) {
-//                        // Handle error here
-//                    }
-//                });
-//            }
-//
-//            // Handle other ChildEventListener methods if needed...
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {}
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {}
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {}
-//        });
-//    }
-//
-//
-//    public void fetchDiscussions(DiscussionsManager manager) {
-//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        DatabaseReference userDiscussionsRef = usersRef.child(currentUser).child("discussions");
-//        userDiscussionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
-//                    String discussionID = discussionSnapshot.getKey();
-//                    fetchDiscussionDetails(manager, discussionID);
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.w(TAG, "Failed to read discussions.", databaseError.toException());
-//            }
-//        });
-//    }
-//
-//    private void fetchDiscussionDetails(DiscussionsManager manager, String discussionID) {
-//        DatabaseReference discussionRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID);
-//
-//        discussionRef.addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
-//                if (discussion != null) {
-//                    discussion.setDiscussionId(dataSnapshot.getKey()); // This sets the discussionID in your Java object
-//                }
-//                // Update your UI with this discussion
-//                // e.g., add this discussion to an adapter for a RecyclerView
-//                //attachDiscussionMessageListener(discussionID);
-//                manager.addNewDiscussion(discussion);
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.w(TAG, "Failed to read discussion details.", databaseError.toException());
-//            }
-//        });
-//    }
-
-//    private void attachDiscussionMessageListener(DiscussionsManager manager, String discussionID) {
-//        DatabaseReference discussionMessagesRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID + "/messages");
-//
-//        ChildEventListener messageListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-//                Message newMessage = dataSnapshot.getValue(Message.class);
-//                // Update your UI with this new message
-//                // For instance, if you're using a RecyclerView to display messages,
-//                // you'd notify the adapter of a new item here.
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-//                Message updatedMessage = dataSnapshot.getValue(Message.class);
-//                // Handle changes to an existing message, if needed
-//            }
-//
-//            // Implement other ChildEventListener methods if needed
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//                // Handle a message being removed, if that's a feature in your app
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-//                // Handle a message being moved, though this is less common
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.w(TAG, "Listener was cancelled for discussion " + discussionID, databaseError.toException());
-//            }
-//        };
-//
-//        // Attach the listener
-//        discussionMessagesRef.addChildEventListener(messageListener);
-//
-//        // Optional: Keep a reference to the listener so you can remove it later if needed
-//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
-//    }
-
-//    private void attachNewDiscussionListener(DiscussionsManager manager) {
-//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        DatabaseReference currentUserDiscussionRef = usersRef.child(currentUser).child("discussions");
-//
-//        ChildEventListener newDiscussionListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-//                String discussionId = dataSnapshot.getKey();
-//                fetchDiscussionDetails(manager, discussionId);
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-//                Message updatedMessage = dataSnapshot.getValue(Message.class);
-//                // Handle changes to an existing message, if needed
-//            }
-//
-//            // Implement other ChildEventListener methods if needed
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//                // Handle a message being removed, if that's a feature in your app
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-//                // Handle a message being moved, though this is less common
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//            }
-//        };
-//
-//        // Attach the listener
-//        currentUserDiscussionRef.addChildEventListener(newDiscussionListener);
-//
-//        // Optional: Keep a reference to the listener so you can remove it later if needed
-//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
-//    }
-//
-//    private void attachLastMessageListener(DiscussionsManager manager, String discussionID) {
-//        DatabaseReference discussionLastMessageRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID + "/lastMessage");
-//
-//        ChildEventListener lastMessageListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-//                Message newMessage = dataSnapshot.getValue(Message.class);
-//                fetchDiscussionDetails(manager, discussionID);
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-//                Message updatedMessage = dataSnapshot.getValue(Message.class);
-//                fetchDiscussionDetails(manager, discussionID);
-//            }
-//
-//            // Implement other ChildEventListener methods if needed
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//                // Handle a message being removed, if that's a feature in your app
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
-//                // Handle a message being moved, though this is less common
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                Log.w(TAG, "Listener was cancelled for discussion " + discussionID, databaseError.toException());
-//            }
-//        };
-//
-//        // Attach the listener
-//        discussionLastMessageRef.addChildEventListener(lastMessageListener);
-//
-//        // Optional: Keep a reference to the listener so you can remove it later if needed
-//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
-//    }
-
-
-//    public void getDiscussions(DiscussionsCallback callback) {
-//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        List<Discussion> discussions = new ArrayList<>();
-//        usersRef.child(currentUser).child("discussions").get().addOnCompleteListener(task -> {
-//            if (task.isSuccessful() && task.getResult() != null) {
-//                Log.d("getDiscussions", "getDiscussions: success");
-//                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-//                    Discussion discussion = snapshot.getValue(Discussion.class);
-//                    discussions.add(discussion);
-//                }
-//                callback.onCallback(discussions);
-//            } else {
-//                Log.w("getDiscussions", "getDiscussions: failure", task.getException());
-//                callback.onCallback(null); // or an empty list
-//            }
-//        });
-//    }
-
-    //    public void getConversationMessages(String discussionId, final MessagesCallback callback) {
-//        List<Message> messages = new ArrayList<>();
-//        discussionsRef.child(discussionId).child("messages").get().addOnCompleteListener(task -> {
-//            if (task.isSuccessful() && task.getResult() != null) {
-//                Log.d("getMessages", "getMessages: success");
-//                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-//                    Message message = snapshot.getValue(Message.class);
-//                    messages.add(message);
-//                }
-//                callback.onCallback(messages);
-//            } else {
-//                Log.w("getMessages", "getMessages: failure", task.getException());
-//                callback.onCallback(null); // or an empty list
-//            }
-//        });
-//    }
-//
-//    public interface MessagesCallback {
-//        void onCallback(List<Message> messages);
-//    }
-//
-//    public void createDiscussion(String fromUserId, String toUserId, String toUserName, final AuthCallback callback) {
-//        String discussionId = usersRef.child(fromUserId).child("discussions").push().getKey();
-//
-//        // get fromUserName
-//        usersRef.child(fromUserId).child("username").get().addOnCompleteListener(task -> {
-//            if (task.isSuccessful() && task.getResult() != null) {
-//                String fromUserName = task.getResult().getValue(String.class);
-//                Log.d(TAG, "createDiscussion: " + fromUserId + " " + fromUserName + " " + toUserId + " " + toUserName + " " + discussionId);
-//                if (discussionId == null) {
-//                    callback.onFailure("Failed to create discussion");
-//                    return;
-//                }
-//                HashMap<String, Object> senderDiscussion = new HashMap<>();
-//                senderDiscussion.put("receiverId", toUserId);
-//                senderDiscussion.put("receiverUserName", toUserName);
-//                senderDiscussion.put("discussionId", discussionId);
-//
-//                HashMap<String, Object> receiverDiscussion = new HashMap<>();
-//                receiverDiscussion.put("discussionId", discussionId);
-//                receiverDiscussion.put("receiverId", fromUserId);
-//                receiverDiscussion.put("receiverUserName", fromUserName);
-//
-//                discussionsRef.child(discussionId).setValue(senderDiscussion)
-//                        .addOnSuccessListener(aVoid -> {
-//                            Log.d("FirebaseHelper", "Discussion created successfully.");
-//                            callback.onSuccess();
-//                        })
-//                        .addOnFailureListener(e -> {
-//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-//                        });
-//
-//                usersRef.child(fromUserId).child("discussions").child(discussionId).setValue(senderDiscussion)
-//                        .addOnSuccessListener(aVoid -> {
-//                            Log.d("FirebaseHelper", "Discussion created successfully.");
-//                            callback.onSuccess();
-//                        })
-//                        .addOnFailureListener(e -> {
-//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-//                        });
-//                usersRef.child(toUserId).child("discussions").child(discussionId).setValue(receiverDiscussion)
-//                        .addOnSuccessListener(aVoid -> {
-//                            Log.d("FirebaseHelper", "Discussion created successfully.");
-//                            callback.onSuccess();
-//                        })
-//                        .addOnFailureListener(e -> {
-//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-//                        });
-//            } else {
-//                Log.w("getMessages", "getMessages: failure", task.getException());
-//                callback.onFailure("Failed to create discussion: " + task.getException().getMessage());
-//            }
-//        });
-//    }
-//
-//    public void listenForNewDiscussions(DiscussionsManager manager, NewDiscussionsCallback callback) {
-//        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//        Query newConversationQuery = usersRef.child(currentUserId).child("discussions");
-//        ChildEventListener childEventListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
-//                String discussionId = dataSnapshot.getKey();
-//
-//                if (discussion != null) {
-//                    discussion.setDiscussionId(discussionId);
-//                    callback.onNewConversationAdded(discussion);
-//                    setDiscussionListener(discussionId, manager);
-//                }
-//            }
-//
-//            @Override
-//            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-//                // Handle changes if needed
-//            }
-//
-//            @Override
-//            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-//                // Handle removal if needed
-//            }
-//
-//            @Override
-//            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-//                // Handle moves if needed
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//                callback.onNewConversationsError(databaseError.toException());
-//            }
-//        };
-//
-//        newConversationQuery.addChildEventListener(childEventListener);
-//    }
-//
-//    public interface NewDiscussionsCallback {
-//        void onNewConversationAdded(Discussion newDiscussion);
-//
-//        void onNewConversationsError(Exception exception);
-//    }
-//
-//    public void listenForLastMessageUpdate(DiscussionsManager manager) {
-//        String currentUserId = mAuth.getCurrentUser().getUid();
-//
-//        usersRef.child(currentUserId).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
-//                    String discussionId = discussionSnapshot.getKey();
-//                    setDiscussionListener(discussionId, manager);
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // Handle error
-//            }
-//        });
-//    }
-//
-//    private void setDiscussionListener(String discussionId, DiscussionsManager manager) {
-//        discussionsRef.child(discussionId).addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
-//                if (discussion != null) {
-//                    // Update your UI with the new discussion data, including the last message.
-//                    manager.updateDiscussion(discussion);
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // Handle error
-//            }
-//        });
-//    }
-//
-//    public interface LastMessageUpdateCallback {
-//        void onLastMessageUpdated(String discussionId, Message lastMessage);
-//
-//        void onDiscussionError(Exception exception);
-//    }
-//
-    public void sendMessage(String discussionId, String content, final AuthCallback callback) {
-        String messageId = discussionsRef.child(discussionId).child("messages").push().getKey();
-        Log.d(TAG, "sendMessage: " + discussionId + " " + content + " " + messageId);
-
-        if (messageId == null) {
-            callback.onFailure("Failed to send message");
-            return;
-        }
-        String senderId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        HashMap<String, Object> messageMap = new HashMap<>();
-        messageMap.put("senderId", senderId);
-        messageMap.put("content", content);
-        messageMap.put("dateTime", String.valueOf(System.currentTimeMillis()));
-
-        discussionsRef.child(discussionId).child("messages").child(messageId).setValue(messageMap)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("FirebaseHelper", "Message sent successfully.");
-                    callback.onSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("FirebaseHelper", "Failed to send message.", e);
-                    callback.onFailure("Failed to send message: " + e.getMessage());
-                });
-
-        discussionsRef.child(discussionId).child("lastMessage").setValue(messageMap)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("FirebaseHelper", "Message sent successfully.");
-                    callback.onSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("FirebaseHelper", "Failed to send message.", e);
-                    callback.onFailure("Failed to send message: " + e.getMessage());
-                });
-    }
-
-    public void listenForMessagesInDiscussion(String discussionId, NewMessageCallback callback) {
-        Log.d(TAG, "listenForMessagesInDiscussion: " + discussionId);
-        DatabaseReference messagesRef = discussionsRef.child(discussionId).child("messages");
-        messagesRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<Message> newMessages = new ArrayList<>();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Message message = snapshot.getValue(Message.class);
-                    String messageId = snapshot.getKey();
-
-                    if (message != null) {
-                        //message.setMessageId(messageId);
-                        newMessages.add(message);
-                    }
-                }
-                callback.onNewMessagesReceived(newMessages);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                callback.onMessageError(databaseError.toException());
-            }
-        });
-    }
-
-
-    public void updateConversationLastTimeOpened(String discussionId) {
-        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        discussionsRef.child(discussionId).child("participants").child(currentUserId).child("lastTimeOpened").setValue(String.valueOf(System.currentTimeMillis()));
-    }
-
-    public interface NewMessageCallback {
-
-        /**
-         * Callback triggered when new messages are received for a discussion.
-         *
-         * @param messages The list of new messages received.
-         */
-        void onNewMessagesReceived(List<Message> messages);
-
-        /**
-         * Callback triggered in case of any error while fetching new messages.
-         *
-         * @param exception The exception representing the error.
-         */
-        void onMessageError(Exception exception);
-    }
 
     public void searchUsers(String keyword, final UserSearchCallback callback) {
         Query searchQuery = usersRef.orderByChild("username").startAt(keyword).endAt(keyword + "\uf8ff");
@@ -771,15 +243,13 @@ public class FirebaseHelper implements Serializable {
             return;
         }
 
-        friendRequestsRef.child(requestId).setValue(friendRequest)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("FirebaseHelper", "Friend request sent successfully.");
-                    callback.onSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("FirebaseHelper", "Failed to send friend request.", e);
-                    callback.onFailure("Failed to send friend request: " + e.getMessage());
-                });
+        friendRequestsRef.child(requestId).setValue(friendRequest).addOnSuccessListener(aVoid -> {
+            Log.d("FirebaseHelper", "Friend request sent successfully.");
+            callback.onSuccess();
+        }).addOnFailureListener(e -> {
+            Log.e("FirebaseHelper", "Failed to send friend request.", e);
+            callback.onFailure("Failed to send friend request: " + e.getMessage());
+        });
     }
 
     public void listenForFriendRequests(FriendRequestCallback callback) {
@@ -836,34 +306,32 @@ public class FirebaseHelper implements Serializable {
     public void respondToFriendRequest(String requestId, String fromUserId, String toUserId, boolean accepted, final FriendshipResponseCallback callback) {
         DatabaseReference requestRef = friendRequestsRef.child(requestId);
 
-        requestRef.child("status").setValue(accepted ? "accepted" : "rejected")
-                .addOnSuccessListener(aVoid -> {
-                    if (accepted) {
-                        DatabaseReference user1FriendsRef = usersRef.child(fromUserId).child("friends");
-                        DatabaseReference user2FriendsRef = usersRef.child(toUserId).child("friends");
+        requestRef.child("status").setValue(accepted ? "accepted" : "rejected").addOnSuccessListener(aVoid -> {
+            if (accepted) {
+                DatabaseReference user1FriendsRef = usersRef.child(fromUserId).child("friends");
+                DatabaseReference user2FriendsRef = usersRef.child(toUserId).child("friends");
 
-                        // Check if "friends" nodes exist for both users, and then proceed
-                        user1FriendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                // Proceed only if the "friends" node exists or it's okay to create it
-                                proceedWithFriendship(fromUserId, toUserId, user1FriendsRef, user2FriendsRef, callback);
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                Log.w("FirebaseHelper", "Failed to check if 'friends' node exists for user1", error.toException());
-                                callback.onFailure("Failed to check friends data for users.");
-                            }
-                        });
-                    } else {
-                        callback.onSuccess();
+                // Check if "friends" nodes exist for both users, and then proceed
+                user1FriendsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        // Proceed only if the "friends" node exists or it's okay to create it
+                        proceedWithFriendship(fromUserId, toUserId, user1FriendsRef, user2FriendsRef, callback);
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.w("FirebaseHelper", "Error updating friend request status", e);
-                    callback.onFailure(e.getMessage());
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.w("FirebaseHelper", "Failed to check if 'friends' node exists for user1", error.toException());
+                        callback.onFailure("Failed to check friends data for users.");
+                    }
                 });
+            } else {
+                callback.onSuccess();
+            }
+        }).addOnFailureListener(e -> {
+            Log.w("FirebaseHelper", "Error updating friend request status", e);
+            callback.onFailure(e.getMessage());
+        });
     }
 
     private void proceedWithFriendship(String fromUserId, String toUserId, DatabaseReference user1FriendsRef, DatabaseReference user2FriendsRef, final FriendshipResponseCallback callback) {
@@ -872,14 +340,9 @@ public class FirebaseHelper implements Serializable {
 
         if (friendshipKey1 != null && friendshipKey2 != null) {
             // Prepare to update both users' friends lists
-            user1FriendsRef.child(friendshipKey1).setValue(toUserId)
-                    .addOnSuccessListener(aVoid ->
-                            // Once user1 is updated, proceed to update user2
-                            user2FriendsRef.child(friendshipKey2).setValue(fromUserId)
-                                    .addOnSuccessListener(aVoidInner -> callback.onSuccess())
-                                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()))
-                    )
-                    .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+            user1FriendsRef.child(friendshipKey1).setValue(toUserId).addOnSuccessListener(aVoid ->
+                    // Once user1 is updated, proceed to update user2
+                    user2FriendsRef.child(friendshipKey2).setValue(fromUserId).addOnSuccessListener(aVoidInner -> callback.onSuccess()).addOnFailureListener(e -> callback.onFailure(e.getMessage()))).addOnFailureListener(e -> callback.onFailure(e.getMessage()));
         } else {
             Log.w("FirebaseHelper", "Error obtaining unique key for friendship");
             callback.onFailure("Could not generate unique key for friendship.");
@@ -1001,76 +464,6 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
-//    public void createDiscussion(String otherParticipantID, final CreateDiscussionCallback callback) {
-//        DatabaseReference newDiscussionRef = discussionsRef.push();
-//        String discussionId = newDiscussionRef.getKey();
-//        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-//
-//        Discussion newDiscussion = new Discussion();
-//        Map<String, Map<String, Object>> participants = new HashMap<>();
-//        Map<String, Object> currentParticipantDetails = new HashMap<>();
-//        Map<String, Object> otherParticipantDetails = new HashMap<>();
-//
-//
-//        AtomicInteger counter = new AtomicInteger(0);  // Counter to track fetched usernames
-//
-//        usersRef.child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                String username = dataSnapshot.child("username").getValue(String.class);
-//                currentParticipantDetails.put("username", username);
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // Handle error
-//                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
-//            }
-//        });
-//
-//        usersRef.child(otherParticipantID).addListenerForSingleValueEvent(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                String username = dataSnapshot.child("username").getValue(String.class);
-//                otherParticipantDetails.put("username", username);
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // Handle error
-//                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
-//            }
-//        });
-//
-//        currentParticipantDetails.put("status", true);
-//        otherParticipantDetails.put("status", true);
-//
-//        participants.put(currentUserId, currentParticipantDetails);
-//        participants.put(otherParticipantID, otherParticipantDetails);
-//
-//        newDiscussion.setParticipants(participants);
-//        newDiscussion.setDiscussionId(discussionId);
-//
-//        // Add other properties to the discussion as needed, e.g., timestamps
-//
-//        // Push the new discussion to Firebase
-//        newDiscussionRef.setValue(newDiscussion)
-//                .addOnSuccessListener(new OnSuccessListener<Void>() {
-//                    @Override
-//                    public void onSuccess(Void aVoid) {
-//                        callback.onDiscussionCreated(newDiscussionRef.getKey()); // Return the ID of the newly created discussion
-//                    }
-//                })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        callback.onFailed(e);
-//                    }
-//                });
-//
-//    }
-
-
     public void createDiscussion(String otherParticipantID, final CreateDiscussionCallback callback) {
         DatabaseReference newDiscussionRef = discussionsRef.push();
         String discussionId = newDiscussionRef.getKey();
@@ -1105,8 +498,7 @@ public class FirebaseHelper implements Serializable {
                     newDiscussion.setDiscussionId(discussionId);
 
                     // Push the new discussion to Firebase
-                    newDiscussionRef.setValue(newDiscussion)
-                            .addOnSuccessListener(aVoid -> callback.onDiscussionCreated(newDiscussionRef.getKey())) // Return the ID of the newly created discussion
+                    newDiscussionRef.setValue(newDiscussion).addOnSuccessListener(aVoid -> callback.onDiscussionCreated(newDiscussionRef.getKey())) // Return the ID of the newly created discussion
                             .addOnFailureListener(callback::onFailed);
                 }
             }
@@ -1120,6 +512,85 @@ public class FirebaseHelper implements Serializable {
 
         usersRef.child(currentUserId).addListenerForSingleValueEvent(listener);
         usersRef.child(otherParticipantID).addListenerForSingleValueEvent(listener);
+    }
+
+    public void sendMessage(String discussionId, String content, final AuthCallback callback) {
+        String messageId = discussionsRef.child(discussionId).child("messages").push().getKey();
+        Log.d(TAG, "sendMessage: " + discussionId + " " + content + " " + messageId);
+
+        if (messageId == null) {
+            callback.onFailure("Failed to send message");
+            return;
+        }
+        String senderId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        HashMap<String, Object> messageMap = new HashMap<>();
+        messageMap.put("senderId", senderId);
+        messageMap.put("content", content);
+        messageMap.put("dateTime", String.valueOf(System.currentTimeMillis()));
+
+        discussionsRef.child(discussionId).child("messages").child(messageId).setValue(messageMap).addOnSuccessListener(aVoid -> {
+            Log.d("FirebaseHelper", "Message sent successfully.");
+            callback.onSuccess();
+        }).addOnFailureListener(e -> {
+            Log.e("FirebaseHelper", "Failed to send message.", e);
+            callback.onFailure("Failed to send message: " + e.getMessage());
+        });
+
+        discussionsRef.child(discussionId).child("lastMessage").setValue(messageMap).addOnSuccessListener(aVoid -> {
+            Log.d("FirebaseHelper", "Message sent successfully.");
+            callback.onSuccess();
+        }).addOnFailureListener(e -> {
+            Log.e("FirebaseHelper", "Failed to send message.", e);
+            callback.onFailure("Failed to send message: " + e.getMessage());
+        });
+    }
+
+    public void listenForMessagesInDiscussion(String discussionId, NewMessageCallback callback) {
+        Log.d(TAG, "listenForMessagesInDiscussion: " + discussionId);
+        DatabaseReference messagesRef = discussionsRef.child(discussionId).child("messages");
+        messagesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Message> newMessages = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Message message = snapshot.getValue(Message.class);
+                    String messageId = snapshot.getKey();
+
+                    if (message != null) {
+                        newMessages.add(message);
+                    }
+                }
+                callback.onNewMessagesReceived(newMessages);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onMessageError(databaseError.toException());
+            }
+        });
+    }
+
+
+    public void updateConversationLastTimeOpened(String discussionId) {
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+        discussionsRef.child(discussionId).child("participants").child(currentUserId).child("lastTimeOpened").setValue(String.valueOf(System.currentTimeMillis()));
+    }
+
+    public interface NewMessageCallback {
+
+        /**
+         * Callback triggered when new messages are received for a discussion.
+         *
+         * @param messages The list of new messages received.
+         */
+        void onNewMessagesReceived(List<Message> messages);
+
+        /**
+         * Callback triggered in case of any error while fetching new messages.
+         *
+         * @param exception The exception representing the error.
+         */
+        void onMessageError(Exception exception);
     }
 
     public interface CreateDiscussionCallback {
@@ -1140,13 +611,6 @@ public class FirebaseHelper implements Serializable {
 
         void onFailed(Exception e);
     }
-
-    public interface DiscussionDetailsCallback {
-        void onDiscussionDetailsReceived(List<Discussion> discussionList);
-
-        void onFailed(Exception e);
-    }
-
 
     public void sortDiscussions(List<Discussion> discussions) {
         Collections.sort(discussions, (d1, d2) -> {
@@ -1179,6 +643,5 @@ public class FirebaseHelper implements Serializable {
             return time2.compareTo(time1); // Descending order
         });
     }
-
 
 }

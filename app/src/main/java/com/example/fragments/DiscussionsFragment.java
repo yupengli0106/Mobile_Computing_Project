@@ -13,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.example.adapters.DiscussionsAdapter;
 import com.example.adapters.NewDiscussionAdapter;
@@ -27,8 +26,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.ArrayList;
 
 public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.OnDiscussionClickListener {
-
-    private final String TAG = "DiscussionsFragment";
 
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
     private final String currentUserId = firebaseHelper.getCurrentUserId();
@@ -52,8 +49,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+                             Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discussions, container, false);
     }
 
@@ -97,6 +93,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
     @Override
     public void onDiscussionClick(Discussion discussion) {
+        String TAG = "DiscussionsFragment";
         Log.d(TAG, "onDiscussionClick: " + discussion.getDiscussionId());
         DiscussionDetailFragment detailFragment = DiscussionDetailFragment.newInstance(discussion);
         getParentFragmentManager().beginTransaction()

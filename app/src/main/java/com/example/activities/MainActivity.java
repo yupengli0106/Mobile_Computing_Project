@@ -155,32 +155,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        firebaseHelper.getDiscussions(new FirebaseHelper.DiscussionsCallback() {
-//            @Override
-//            public void onCallback(List<Discussion> discussions) {
-//                DiscussionsManager.getInstance().setDiscussions(discussions);
-//            }
-//        });
-//
-//        firebaseHelper.listenForNewDiscussions(DiscussionsManager.getInstance(), new FirebaseHelper.NewDiscussionsCallback() {
-//            @Override
-//            public void onNewConversationAdded(Discussion newDiscussion) {
-//                DiscussionsManager.getInstance().addNewDiscussion(newDiscussion);
-//                Log.d("Discussions Updated", "Updated discussions:");
-//            }
-//
-//            @Override
-//            public void onNewConversationsError(Exception e) {
-//                Toast.makeText(MainActivity.this, "can not get the conversation: " + e.getMessage(), Toast.LENGTH_LONG)
-//                        .show();
-//            }
-//        });
-//
-//
-//        firebaseHelper.listenForLastMessageUpdate(DiscussionsManager.getInstance());
 
-
-        // setOnNavigationItemSelectedListener
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();

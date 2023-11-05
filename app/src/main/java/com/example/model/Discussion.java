@@ -6,7 +6,6 @@ import com.example.helpers.FirebaseHelper;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,34 +82,27 @@ public class Discussion implements Serializable {
     public Boolean isUnread() {
         Long lastTimeOpened = null;
         if (participants.get(currentUserId).containsKey("lastTimeOpened")) {
-            Log.d("CHECK UNREAD", "contains key");
-            lastTimeOpened = Long.valueOf(participants.get(currentUserId).get("lastTimeOpened").toString());  // Assuming this returns a Long
+            lastTimeOpened = Long.valueOf(participants.get(currentUserId).get("lastTimeOpened").toString());
         }
 
-        Log.d("CHECK UNREAD", "isUnread: " + lastTimeOpened + " " + getLastMessage());
-
-        // Scenario 1: User has never opened it
         if (lastTimeOpened == null) {
             return true;
         }
 
         Message lastMessage = getLastMessage();
 
-        // Scenario 4: The last message was sent by the current user.
         if (lastMessage != null && lastMessage.getSenderId().equals(currentUserId)) {
             return false;
         }
 
-        // Scenario 2: There's a last message and its timestamp is newer than the last time opened
         if (lastMessage != null && lastMessage.getTimestamp() > lastTimeOpened) {
             return true;
         }
 
-        // Scenario 3: There's no last message and user has opened the conversation
         if (lastMessage == null && lastTimeOpened != null) {
             return false;
         }
 
-        return false; // This is a fallback return, ideally shouldn't be reached
+        return false;
     }
 }

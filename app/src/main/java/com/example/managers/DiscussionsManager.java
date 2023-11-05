@@ -30,27 +30,4 @@ public class DiscussionsManager {
     public void setDiscussions(List<Discussion> discussions) {
         discussionsLiveData.setValue(discussions);
     }
-
-    public void addNewDiscussion(Discussion newDiscussion) {
-        List<Discussion> currentDiscussions = discussionsLiveData.getValue();
-        if (currentDiscussions == null) {
-            currentDiscussions = new ArrayList<>();
-        }
-        currentDiscussions.add(newDiscussion);
-        discussionsLiveData.setValue(currentDiscussions);
-    }
-
-    public void updateDiscussion(Discussion discussion) {
-        List<Discussion> currentDiscussions = discussionsLiveData.getValue();
-        if (currentDiscussions == null) {
-            currentDiscussions = new ArrayList<>();
-        }
-        for (int i = 0; i < currentDiscussions.size(); i++) {
-            if (currentDiscussions.get(i).getDiscussionId().equals(discussion.getDiscussionId())) {
-                currentDiscussions.set(i, discussion);
-                break;
-            }
-        }
-        discussionsLiveData.setValue(currentDiscussions);
-    }
 }

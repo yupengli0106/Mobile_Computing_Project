@@ -23,15 +23,14 @@ import java.util.List;
 
 public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.DiscussionViewHolder> {
     private List<Discussion> discussions;
-    private String currentUserId;
+    private final String currentUserId;
 
-    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     public interface OnDiscussionClickListener {
         void onDiscussionClick(Discussion discussion);
     }
 
-    private OnDiscussionClickListener listener;
+    private final OnDiscussionClickListener listener;
 
     public DiscussionsAdapter(String currentUserId, List<Discussion> discussions, OnDiscussionClickListener listener) {
         this.currentUserId = currentUserId;
