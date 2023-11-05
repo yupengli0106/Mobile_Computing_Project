@@ -5,11 +5,15 @@
     android:orientation="horizontal"
     android:padding="16dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="41dp"
-        android:layout_height="41dp"
-        android:src="@drawable/chat_background_image"
-        android:layout_gravity="center_vertical"/>
+    <TextView
+        android:id="@+id/user_avatar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/circle_background"
+        android:gravity="center"
+        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginEnd="16dp" />
 
     <LinearLayout
         android:layout_width="0dp"

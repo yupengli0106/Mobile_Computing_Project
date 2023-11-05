@@ -1001,6 +1001,76 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
+//    public void createDiscussion(String otherParticipantID, final CreateDiscussionCallback callback) {
+//        DatabaseReference newDiscussionRef = discussionsRef.push();
+//        String discussionId = newDiscussionRef.getKey();
+//        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//
+//        Discussion newDiscussion = new Discussion();
+//        Map<String, Map<String, Object>> participants = new HashMap<>();
+//        Map<String, Object> currentParticipantDetails = new HashMap<>();
+//        Map<String, Object> otherParticipantDetails = new HashMap<>();
+//
+//
+//        AtomicInteger counter = new AtomicInteger(0);  // Counter to track fetched usernames
+//
+//        usersRef.child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                String username = dataSnapshot.child("username").getValue(String.class);
+//                currentParticipantDetails.put("username", username);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                // Handle error
+//                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
+//            }
+//        });
+//
+//        usersRef.child(otherParticipantID).addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                String username = dataSnapshot.child("username").getValue(String.class);
+//                otherParticipantDetails.put("username", username);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                // Handle error
+//                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
+//            }
+//        });
+//
+//        currentParticipantDetails.put("status", true);
+//        otherParticipantDetails.put("status", true);
+//
+//        participants.put(currentUserId, currentParticipantDetails);
+//        participants.put(otherParticipantID, otherParticipantDetails);
+//
+//        newDiscussion.setParticipants(participants);
+//        newDiscussion.setDiscussionId(discussionId);
+//
+//        // Add other properties to the discussion as needed, e.g., timestamps
+//
+//        // Push the new discussion to Firebase
+//        newDiscussionRef.setValue(newDiscussion)
+//                .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                    @Override
+//                    public void onSuccess(Void aVoid) {
+//                        callback.onDiscussionCreated(newDiscussionRef.getKey()); // Return the ID of the newly created discussion
+//                    }
+//                })
+//                .addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception e) {
+//                        callback.onFailed(e);
+//                    }
+//                });
+//
+//    }
+
+
     public void createDiscussion(String otherParticipantID, final CreateDiscussionCallback callback) {
         DatabaseReference newDiscussionRef = discussionsRef.push();
         String discussionId = newDiscussionRef.getKey();
@@ -1008,33 +1078,48 @@ public class FirebaseHelper implements Serializable {
 
         Discussion newDiscussion = new Discussion();
         Map<String, Map<String, Object>> participants = new HashMap<>();
-        Map<String, Object> participantDetails = new HashMap<>();
+        Map<String, Object> currentParticipantDetails = new HashMap<>();
+        Map<String, Object> otherParticipantDetails = new HashMap<>();
 
-        participantDetails.put("status", true);
+        AtomicInteger counter = new AtomicInteger(0);  // Counter to track fetched usernames
 
-        participants.put(currentUserId, participantDetails);
-        participants.put(otherParticipantID, participantDetails);
+        ValueEventListener listener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getKey().equals(currentUserId)) {
+                    String username = dataSnapshot.child("username").getValue(String.class);
+                    currentParticipantDetails.put("username", username);
+                } else {
+                    String username = dataSnapshot.child("username").getValue(String.class);
+                    otherParticipantDetails.put("username", username);
+                }
 
-        newDiscussion.setParticipants(participants);
-        newDiscussion.setDiscussionId(discussionId);
+                if (counter.incrementAndGet() == 2) { // Both usernames have been fetched
+                    currentParticipantDetails.put("status", true);
+                    otherParticipantDetails.put("status", true);
 
-        // Add other properties to the discussion as needed, e.g., timestamps
+                    participants.put(currentUserId, currentParticipantDetails);
+                    participants.put(otherParticipantID, otherParticipantDetails);
 
-        // Push the new discussion to Firebase
-        newDiscussionRef.setValue(newDiscussion)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        callback.onDiscussionCreated(newDiscussionRef.getKey()); // Return the ID of the newly created discussion
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        callback.onFailed(e);
-                    }
-                });
+                    newDiscussion.setParticipants(participants);
+                    newDiscussion.setDiscussionId(discussionId);
 
+                    // Push the new discussion to Firebase
+                    newDiscussionRef.setValue(newDiscussion)
+                            .addOnSuccessListener(aVoid -> callback.onDiscussionCreated(newDiscussionRef.getKey())) // Return the ID of the newly created discussion
+                            .addOnFailureListener(callback::onFailed);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
+            }
+        };
+
+        usersRef.child(currentUserId).addListenerForSingleValueEvent(listener);
+        usersRef.child(otherParticipantID).addListenerForSingleValueEvent(listener);
     }
 
     public interface CreateDiscussionCallback {
@@ -1094,7 +1179,6 @@ public class FirebaseHelper implements Serializable {
             return time2.compareTo(time1); // Descending order
         });
     }
-
 
 
 }

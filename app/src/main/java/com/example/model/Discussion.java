@@ -47,10 +47,21 @@ public class Discussion implements Serializable {
         this.participants = participants;
     }
 
-    public List<String> getOtherParticipants(String currentUserID) {
+    public List<String> getOtherParticipantIDs(String currentUserID) {
         List<String> otherParticipants = new ArrayList<>(getParticipants().keySet());
         otherParticipants.remove(currentUserID);
         return otherParticipants;
+    }
+
+    public Map<String, Map<String, Object>> getOtherParticipantDetails(String currentUserID) {
+        Map<String, Map<String, Object>> allParticipants = new HashMap<>(getParticipants());
+
+        for (Map.Entry<String, Map<String, Object>> entry : getParticipants().entrySet()) {
+            allParticipants.put(entry.getKey(), new HashMap<>(entry.getValue()));
+        }
+
+        allParticipants.remove(currentUserID);
+        return allParticipants;
     }
 
     public Map<String, Message> getMessages() {
@@ -69,16 +80,8 @@ public class Discussion implements Serializable {
         this.lastMessage = lastMessage;
     }
 
-    public Long getLastTimeOpened() {
-        if (participants == null || !participants.containsKey("lastTimeOpened")) {
-            return null;
-        }
-        return Long.valueOf(participants.get("lastTimeOpened").toString());
-    }
-
     public Boolean isUnread() {
         Long lastTimeOpened = null;
-
         if (participants.get(currentUserId).containsKey("lastTimeOpened")) {
             Log.d("CHECK UNREAD", "contains key");
             lastTimeOpened = Long.valueOf(participants.get(currentUserId).get("lastTimeOpened").toString());  // Assuming this returns a Long

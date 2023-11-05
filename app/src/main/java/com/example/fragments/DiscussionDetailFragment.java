@@ -67,13 +67,15 @@ public class DiscussionDetailFragment extends Fragment {
         Button sendButton = view.findViewById(R.id.send_button);
         Button backButton = view.findViewById(R.id.back_button);
         TextView receiverIdTextView = view.findViewById(R.id.receiver_text_view);
-        String receiverID = discussion.getOtherParticipants(currentUserID).get(0);
+        TextView userAvatarTextView = view.findViewById(R.id.user_avatar);
+        String receiverID = discussion.getOtherParticipantIDs(currentUserID).get(0);
 
         firebaseHelper.usersRef.child(receiverID).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 String username = dataSnapshot.child("username").getValue(String.class); // Assuming the field is named "username"
                 receiverIdTextView.setText(username);
+                userAvatarTextView.setText(username.substring(0, 1).toUpperCase());
             }
 
             @Override
@@ -98,6 +100,7 @@ public class DiscussionDetailFragment extends Fragment {
                     .replace(R.id.fragment_container, discussionsFragmentFragment)
                     .addToBackStack(null)
                     .commit();
+            firebaseHelper.updateConversationLastTimeOpened(discussion.getDiscussionId());
         });
 
         sendButton.setOnClickListener(v -> {

@@ -49,25 +49,12 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
 
     @Override
     public void onBindViewHolder(DiscussionsAdapter.DiscussionViewHolder holder,
-            @SuppressLint("RecyclerView") int position) {
+                                 @SuppressLint("RecyclerView") int position) {
         Discussion discussion = discussions.get(position);
-        String receiverID = discussion.getOtherParticipants(currentUserId).get(0);
-        firebaseHelper.usersRef.child(receiverID).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String username = dataSnapshot.child("username").getValue(String.class); // Assuming the field is named "username"
-                holder.userName.setText(username);
-                holder.userAvatar.setText(username.substring(0, 1).toUpperCase());
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle error
-                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
-            }
-        });
-
-
+        String receiverID = discussion.getOtherParticipantIDs(currentUserId).get(0);
+        String receiverUsername = discussion.getOtherParticipantDetails(currentUserId).get(receiverID).get("username").toString();
+        holder.userName.setText(receiverUsername);
+        holder.userAvatar.setText(receiverUsername.substring(0, 1).toUpperCase());
 
         if (discussion.getLastMessage() == null) {
             holder.lastMessage.setText("");
@@ -94,7 +81,7 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
         public TextView userAvatar;
 
         public DiscussionViewHolder(View itemView, List<Discussion> discussions,
-                final OnDiscussionClickListener listener) {
+                                    final OnDiscussionClickListener listener) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             lastMessage = itemView.findViewById(R.id.last_message);
