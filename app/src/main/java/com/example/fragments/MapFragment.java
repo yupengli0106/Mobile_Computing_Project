@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.activities.LoginActivity;
+import com.example.managers.FriendManager;
+import com.example.model.Friend;
 import com.example.zenly.R;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -34,6 +36,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.gms.maps.model.Marker;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class MapFragment extends Fragment {
     private final String TAG = "MapFragmentLog";
@@ -43,7 +48,8 @@ public class MapFragment extends Fragment {
     private ValueEventListener myValueEventListener;
     // use a HashMap to store the markers of all users
     private final HashMap<String, Marker> userMarkers = new HashMap<>();
-    // use a HashMap to store the usernames of all users to avoid querying the database multiple times
+    // use a HashMap to store the usernames of all users to avoid querying the
+    // database multiple times
     private final HashMap<String, String> usernameCache = new HashMap<>();
     // default zoom level of the map when the app is first loaded (street level)
     private final float DEFAULT_ZOOM_LEVEL = 15.0f;
@@ -58,7 +64,7 @@ public class MapFragment extends Fragment {
     private boolean isFirstLoad = true;
     // Firebase user
     private FirebaseUser currentUser = null;
-
+    private FriendManager friendManager;
 
     // callback method for when the map is ready
     private final OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -68,8 +74,10 @@ public class MapFragment extends Fragment {
          * This callback is triggered when the map is ready to be used.
          * This is where we can add markers or lines, add listeners or move the camera.
          * In this case, we just add a marker near Sydney, Australia.
-         * If Google Play services is not installed on the device, the user will be prompted to
-         * install it inside the SupportMapFragment. This method will only be triggered once the
+         * If Google Play services is not installed on the device, the user will be
+         * prompted to
+         * install it inside the SupportMapFragment. This method will only be triggered
+         * once the
          * user has installed Google Play services and returned to the app.
          */
         @Override
@@ -105,13 +113,14 @@ public class MapFragment extends Fragment {
         }
     };
 
-    public MapFragment() {}
+    public MapFragment() {
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
@@ -122,8 +131,9 @@ public class MapFragment extends Fragment {
         DatabaseReference myDatabase = FirebaseDatabase.getInstance().getReference();
         FirebaseAuth myAuth = FirebaseAuth.getInstance();
         currentUser = myAuth.getCurrentUser();
+        friendManager = FriendManager.getInstance();
 
-        if (currentUser != null) {  // check if the user is logged in
+        if (currentUser != null) { // check if the user is logged in
             // get the reference to the locations node
             locationsRef = myDatabase.child(LOCATIONS_PATH);
             // get the reference to the user node
@@ -151,12 +161,27 @@ public class MapFragment extends Fragment {
         myValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Log.d(TAG, "onDataChange: Total Users: " + dataSnapshot.getChildrenCount());
+                // get the list of friends of the current user
+                List<Friend> currentFriends = friendManager.getFriendsList().getValue();
+                // use a HashSet to store the user IDs of all friends
+                Set<String> friendIds = new HashSet<>();
 
-                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) { // traverse all users
-                    Log.d(TAG, "onDataChange: User ID: " + userSnapshot.getKey());
-                    Log.d(TAG, "onDataChange: User Data: " + userSnapshot.getValue());
-                    handleNewLocation(userSnapshot);
+                if (currentFriends != null) {
+                    for (Friend friend : currentFriends) {
+                        // add the user ID of each friend to the HashSet
+                        friendIds.add(friend.getUserId());
+                    }
+                }
+
+                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    if (userId != null) {
+                        if (currentUser != null && userId.equals(currentUser.getUid())) {
+                            handleNewLocation(userSnapshot); // update the current user's location
+                        } else if (friendIds.contains(userId)) {
+                            handleNewLocation(userSnapshot); // update the location of friends
+                        }
+                    }
                 }
             }
 
@@ -173,9 +198,9 @@ public class MapFragment extends Fragment {
         }
     }
 
-
     /**
      * Handle new location of a user
+     * 
      * @param userSnapshot snapshot of the user
      */
     private void handleNewLocation(@NonNull DataSnapshot userSnapshot) {
@@ -202,7 +227,7 @@ public class MapFragment extends Fragment {
         specificUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                //TODO: TBD if the username can be changed and need to update the usernameCache
+                // TODO: TBD if the username can be changed and need to update the usernameCache
                 String username = usernameCache.get(userId);
                 if (username == null) {
                     username = dataSnapshot.child("username").getValue(String.class);
@@ -219,17 +244,18 @@ public class MapFragment extends Fragment {
         });
     }
 
-
     /**
      * Update the marker on the map
-     * @param userId the user ID
-     * @param newLocation new location of the user
-     * @param zoomLevel zoom level of the map
-     * @param username username of the user
-     * @param speed speed of the user
+     * 
+     * @param userId       the user ID
+     * @param newLocation  new location of the user
+     * @param zoomLevel    zoom level of the map
+     * @param username     username of the user
+     * @param speed        speed of the user
      * @param batteryLevel battery level of the user's device
      */
-    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed, int batteryLevel) {
+    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed,
+            int batteryLevel) {
         if (myMap != null) {
             Marker existingMarker = userMarkers.get(userId); // get the existing marker
             if (existingMarker != null) {
@@ -264,10 +290,10 @@ public class MapFragment extends Fragment {
         super.onDestroy();
         // Remove the listener using the member variable to avoid memory leaks
         // foreground service will keep running even if the app is closed
-        //TODO: foreground service will be stopped when the user logs out
-//        if (myValueEventListener != null && locationsRef != null) {
-//            locationsRef.removeEventListener(myValueEventListener);
-//        }
+        // TODO: foreground service will be stopped when the user logs out
+        // if (myValueEventListener != null && locationsRef != null) {
+        // locationsRef.removeEventListener(myValueEventListener);
+        // }
     }
 
 }

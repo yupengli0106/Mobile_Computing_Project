@@ -1,23 +1,17 @@
 package com.example.model;
 
-import java.util.HashMap;
-import java.util.List;
-
 public class User {
     public String userId;
-
     public String username;
     public String email;
-    public String password;
 
     public User() {
         // Default constructor is required for Firebase
     }
 
-    public User(String username, String email, String password) {
+    public User(String username, String email) {
         this.username = username;
         this.email = email;
-        this.password = password;
     }
 
     public String getUserId() {
@@ -44,12 +38,4 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-    
 }
