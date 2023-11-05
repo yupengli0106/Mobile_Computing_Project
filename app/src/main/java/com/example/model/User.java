@@ -4,6 +4,15 @@ public class User {
     public String userId;
     public String username;
     public String email;
+    public String step;
+
+    public String getStep() {
+        return step;
+    }
+
+    public void setStep(String step) {
+        this.step = step;
+    }
 
     public User() {
         // Default constructor is required for Firebase
