@@ -1,6 +1,8 @@
 package com.example.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +26,7 @@ import com.example.adapters.UsersAdapter;
 import com.example.helpers.FirebaseHelper;
 import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
+import com.example.model.Friend;
 import com.example.model.User;
 import com.example.zenly.R;
 import com.google.android.material.badge.BadgeDrawable;
@@ -84,10 +87,32 @@ public class FriendsFragment extends Fragment {
         SearchBar searchBar = view.findViewById(R.id.search_bar);
         SearchView searchView = view.findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
+        FriendsAdapter searchViewAdapter = new FriendsAdapter(new ArrayList<>());
+        RecyclerView searchViewRecyclerView = view.findViewById(R.id.reactive_list);
+        searchViewRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        searchViewRecyclerView.setAdapter(searchViewAdapter);
+        searchView.getEditText().addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                List<Friend> searchResults = FriendManager.getInstance().searchFriends(editable.toString());
+
+                // Update the RecyclerView adapter
+                searchViewAdapter.setFriendList(searchResults);
+            }
+        });
 
         RecyclerView friendListView = view.findViewById(R.id.friends_list);
         friendListView.setLayoutManager(new LinearLayoutManager(getContext()));
         friendsAdapter = new FriendsAdapter(new ArrayList<>());
+
         friendListView.setAdapter(friendsAdapter);
         FriendManager.getInstance().getFriendsList().observe(getViewLifecycleOwner(), friendList -> {
             friendsAdapter.setFriendList(friendList);
@@ -140,10 +165,19 @@ public class FriendsFragment extends Fragment {
 
         builder.setView(dialogView)
                 .setTitle("Add friend")
+                .setPositiveButton("Search", null)
                 .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
 
 
         AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            Button searchButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            searchButton.setOnClickListener(view -> {
+                String searchText = searchField.getText().toString();
+                performUserSearch(searchText);
+            });
+        });
 
         dialog.show();
     }

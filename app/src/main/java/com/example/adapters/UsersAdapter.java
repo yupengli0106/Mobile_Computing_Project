@@ -43,15 +43,16 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         User currentUser = userList.get(position);
         holder.userName.setText(currentUser.username);
         holder.userAvatar.setText(currentUser.username.substring(0, 1).toUpperCase());
+        holder.userEmail.setText(currentUser.email);
 
         //Me situation
         if (currentUser.getUserId().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
             //Me situation
-            holder.userStatus.setText("Me");
+            holder.userStatus.setText("(Me)");
             holder.userStatus.setVisibility(View.VISIBLE);
             holder.addFriendButton.setVisibility(View.GONE);
         } else if (FriendManager.getInstance().isUserAFriend(currentUser.getUserId())) {
-            holder.userStatus.setText("Friend");
+            holder.userStatus.setText("(Friend)");
             holder.userStatus.setVisibility(View.VISIBLE);
             holder.addFriendButton.setVisibility(View.GONE);
         } else {
@@ -110,7 +111,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
 
     public static class UserViewHolder extends RecyclerView.ViewHolder {
-        public TextView userName, userAvatar;
+        public TextView userName, userAvatar, userEmail;
         public FloatingActionButton addFriendButton;
         public TextView userStatus;
 
@@ -119,6 +120,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
             userName = itemView.findViewById(R.id.user_name);
             userAvatar = itemView.findViewById(R.id.user_avatar);
             addFriendButton = itemView.findViewById(R.id.add_friend_button);
+            userEmail = itemView.findViewById((R.id.user_email));
             userStatus = itemView.findViewById(R.id.user_status);
         }
     }

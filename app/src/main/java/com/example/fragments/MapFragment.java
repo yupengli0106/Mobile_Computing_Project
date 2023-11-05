@@ -48,8 +48,7 @@ public class MapFragment extends Fragment {
     private ValueEventListener myValueEventListener;
     // use a HashMap to store the markers of all users
     private final HashMap<String, Marker> userMarkers = new HashMap<>();
-    // use a HashMap to store the usernames of all users to avoid querying the
-    // database multiple times
+    // use a HashMap to store the usernames of all users to avoid querying the database multiple times
     private final HashMap<String, String> usernameCache = new HashMap<>();
     // default zoom level of the map when the app is first loaded (street level)
     private final float DEFAULT_ZOOM_LEVEL = 15.0f;
@@ -133,7 +132,7 @@ public class MapFragment extends Fragment {
         currentUser = myAuth.getCurrentUser();
         friendManager = FriendManager.getInstance();
 
-        if (currentUser != null) { // check if the user is logged in
+        if (currentUser != null) {  // check if the user is logged in
             // get the reference to the locations node
             locationsRef = myDatabase.child(LOCATIONS_PATH);
             // get the reference to the user node
@@ -177,9 +176,9 @@ public class MapFragment extends Fragment {
                     String userId = userSnapshot.getKey();
                     if (userId != null) {
                         if (currentUser != null && userId.equals(currentUser.getUid())) {
-                            handleNewLocation(userSnapshot); // update the current user's location
+                            handleNewLocation(userSnapshot);  // update the current user's location
                         } else if (friendIds.contains(userId)) {
-                            handleNewLocation(userSnapshot); // update the location of friends
+                            handleNewLocation(userSnapshot);  // update the location of friends
                         }
                     }
                 }
@@ -197,6 +196,53 @@ public class MapFragment extends Fragment {
             locationsRef.addValueEventListener(myValueEventListener);
         }
     }
+
+
+    /**
+     * Handle new location of a user
+     * @param userSnapshot snapshot of the user
+     */
+    private void handleNewLocation(@NonNull DataSnapshot userSnapshot) {
+        // get the user ID
+        String userId = userSnapshot.getKey();
+
+        // get the user's location
+        Double latitudeValue = userSnapshot.child("latitude").getValue(Double.class);
+        double latitude = (latitudeValue != null) ? latitudeValue : 0.0;
+        Double longitudeValue = userSnapshot.child("longitude").getValue(Double.class);
+        double longitude = (longitudeValue != null) ? longitudeValue : 0.0;
+        Float speedValue = userSnapshot.child("speed").getValue(Float.class);
+        float speed = (speedValue != null) ? speedValue : 0.0f;
+        Long timestampValue = userSnapshot.child("timestamp").getValue(Long.class);
+        long timestamp = (timestampValue != null) ? timestampValue : 0L;// TODO: last update time
+        Integer batteryLevelValue = userSnapshot.child("batteryLevel").getValue(Integer.class);
+        int batteryLevel = (batteryLevelValue != null) ? batteryLevelValue : 0;
+
+        // create a LatLng object from the latitude and longitude values
+        LatLng newLocation = new LatLng(latitude, longitude);
+
+        // get the username of the user
+        DatabaseReference specificUserRef = userRef.child(userId);
+        specificUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                //TODO: TBD if the username can be changed and need to update the usernameCache
+                String username = usernameCache.get(userId);
+                if (username == null) {
+                    username = dataSnapshot.child("username").getValue(String.class);
+                    usernameCache.put(userId, username);
+                }
+                // update the marker on the map after getting the username
+                updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL, username, speed, batteryLevel);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d(TAG, "get username onCancelled: " + databaseError.getMessage());
+            }
+        });
+    }
+
 
     /**
      * Handle new location of a user
@@ -246,16 +292,14 @@ public class MapFragment extends Fragment {
 
     /**
      * Update the marker on the map
-     * 
-     * @param userId       the user ID
-     * @param newLocation  new location of the user
-     * @param zoomLevel    zoom level of the map
-     * @param username     username of the user
-     * @param speed        speed of the user
+     * @param userId the user ID
+     * @param newLocation new location of the user
+     * @param zoomLevel zoom level of the map
+     * @param username username of the user
+     * @param speed speed of the user
      * @param batteryLevel battery level of the user's device
      */
-    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed,
-            int batteryLevel) {
+    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed, int batteryLevel) {
         if (myMap != null) {
             Marker existingMarker = userMarkers.get(userId); // get the existing marker
             if (existingMarker != null) {
@@ -290,10 +334,10 @@ public class MapFragment extends Fragment {
         super.onDestroy();
         // Remove the listener using the member variable to avoid memory leaks
         // foreground service will keep running even if the app is closed
-        // TODO: foreground service will be stopped when the user logs out
-        // if (myValueEventListener != null && locationsRef != null) {
-        // locationsRef.removeEventListener(myValueEventListener);
-        // }
+        //TODO: foreground service will be stopped when the user logs out
+//        if (myValueEventListener != null && locationsRef != null) {
+//            locationsRef.removeEventListener(myValueEventListener);
+//        }
     }
 
 }

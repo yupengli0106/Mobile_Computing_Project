@@ -66,7 +66,14 @@
         android:id="@+id/search_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:hint="@string/search_friends" />
+        android:hint="@string/search_friends">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/reactive_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp" />
+    </com.google.android.material.search.SearchView>
 
     <!-- Friends list -->
     <androidx.recyclerview.widget.RecyclerView
