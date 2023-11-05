@@ -20,7 +20,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     private static final int VIEW_TYPE_RECEIVED = 2;
 
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
-    private String currentUserId = firebaseHelper.getCurrentUserId(); // Replace this with the ID of the logged-in user.
+    private final String currentUserId = firebaseHelper.getCurrentUserId();
     private List<Message> messages;
 
     public MessagesAdapter(List<Message> messages) {

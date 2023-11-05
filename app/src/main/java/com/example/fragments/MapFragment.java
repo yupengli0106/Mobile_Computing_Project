@@ -197,7 +197,7 @@ public class MapFragment extends Fragment {
         }
     }
 
-    
+
     /**
      * Handle new location of a user
      * 
