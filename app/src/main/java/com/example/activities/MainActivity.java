@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
 
     private BadgeDrawable friendRequestsBadge;
 
+    private BadgeDrawable discussionUpdatesBadge;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         // set badge for friends_nav(request)
         friendRequestsBadge = bottomNavigationView.getOrCreateBadge(R.id.nav_friends);
+
+        discussionUpdatesBadge = bottomNavigationView.getOrCreateBadge(R.id.nav_chat);
 
         // set map fragment as default fragment
         fragmentManager.beginTransaction().replace(R.id.fragment_container, mapFragment).commit();
@@ -97,29 +101,83 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        firebaseHelper.getDiscussions(new FirebaseHelper.DiscussionsCallback() {
+        firebaseHelper.fetchUserDiscussions(new FirebaseHelper.DiscussionListCallback() {
             @Override
-            public void onCallback(List<Discussion> discussions) {
-                DiscussionsManager.getInstance().setDiscussions(discussions);
+            public void onDiscussionListReceived(List<Discussion> discussionList) {
+                DiscussionsManager.getInstance().setDiscussions(discussionList);
+                int unreadCount = 0;
+                for (Discussion discussion : discussionList) {
+                    if (discussion.isUnread()) {
+                        unreadCount++;
+                    }
+                }
+                if (discussionUpdatesBadge != null) {
+                    if (unreadCount == 0) {
+                        discussionUpdatesBadge.setVisible(false);
+                    } else {
+                        discussionUpdatesBadge.setNumber(unreadCount);
+                        discussionUpdatesBadge.setVisible(true);
+                    }
+                }
             }
-        });
-
-
-        firebaseHelper.listenForNewDiscussions(DiscussionsManager.getInstance(), new FirebaseHelper.NewDiscussionsCallback() {
-            @Override
-            public void onNewConversationAdded(Discussion newDiscussion) {
-                DiscussionsManager.getInstance().addNewDiscussion(newDiscussion);
-                Log.d("Discussions Updated", "Updated discussions:");
-            }
 
             @Override
-            public void onNewConversationsError(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the conversation: " + e.getMessage(), Toast.LENGTH_LONG)
+            public void onFailed(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
                         .show();
             }
         });
 
-        firebaseHelper.listenForLastMessageUpdate(DiscussionsManager.getInstance());
+        firebaseHelper.listenForDiscussionUpdates(new FirebaseHelper.DiscussionUpdateCallback() {
+            @Override
+            public void onDiscussionUpdateReceived(List<Discussion> updatedDiscussionList) {
+                DiscussionsManager.getInstance().setDiscussions(updatedDiscussionList);
+                int unreadCount = 0;
+                for (Discussion discussion : updatedDiscussionList) {
+                    if (discussion.isUnread()) {
+                        unreadCount++;
+                    }
+                }
+                if (discussionUpdatesBadge != null) {
+                    if (unreadCount == 0) {
+                        discussionUpdatesBadge.setVisible(false);
+                    } else {
+                        discussionUpdatesBadge.setNumber(unreadCount);
+                        discussionUpdatesBadge.setVisible(true);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailed(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
+                        .show();
+            }
+        });
+
+//        firebaseHelper.getDiscussions(new FirebaseHelper.DiscussionsCallback() {
+//            @Override
+//            public void onCallback(List<Discussion> discussions) {
+//                DiscussionsManager.getInstance().setDiscussions(discussions);
+//            }
+//        });
+//
+//        firebaseHelper.listenForNewDiscussions(DiscussionsManager.getInstance(), new FirebaseHelper.NewDiscussionsCallback() {
+//            @Override
+//            public void onNewConversationAdded(Discussion newDiscussion) {
+//                DiscussionsManager.getInstance().addNewDiscussion(newDiscussion);
+//                Log.d("Discussions Updated", "Updated discussions:");
+//            }
+//
+//            @Override
+//            public void onNewConversationsError(Exception e) {
+//                Toast.makeText(MainActivity.this, "can not get the conversation: " + e.getMessage(), Toast.LENGTH_LONG)
+//                        .show();
+//            }
+//        });
+//
+//
+//        firebaseHelper.listenForLastMessageUpdate(DiscussionsManager.getInstance());
 
 
         // setOnNavigationItemSelectedListener

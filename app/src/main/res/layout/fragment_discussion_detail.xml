@@ -20,13 +20,13 @@
 
         <Button
             android:id="@+id/back_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:gravity="center"
             android:layout_weight="0.2"
             android:background="@drawable/outline_back_chat"
-            android:contentDescription="back to conversations" />
+            android:contentDescription="back to conversations"
+            android:gravity="center" />
         <TextView
             android:id="@+id/receiver_text_view"
             android:layout_width="wrap_content"
@@ -34,6 +34,7 @@
             android:layout_gravity="center_horizontal"
             android:gravity="center"
             android:text="Username"
+            android:textSize="26sp"
             android:layout_weight="0.8"/>
     </LinearLayout>
 

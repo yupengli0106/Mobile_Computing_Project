@@ -1,27 +1,34 @@
 package com.example.model;
 
+import android.util.Log;
+
+import com.example.helpers.FirebaseHelper;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Discussion implements Serializable {
     private String discussionId;
-    private String receiverId;
-    private String receiverUserName;
-
+    private Map<String, Map<String, Object>> participants;
+    private Map<String, Message> messages;
     private Message lastMessage;
 
-    private String lastTimeOpened;
+    private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final String currentUserId = firebaseHelper.getCurrentUserId();
 
     public Discussion() {
 
     }
-    public Discussion(String discussionId, String receiverId, String receiverUserName, Message lastMessage, String lastTimeOpened) {
+
+    public Discussion(String discussionId, Map<String, Map<String, Object>> participants, Map<String, Message> messages, Message lastMessage) {
         this.discussionId = discussionId;
-        this.receiverId = receiverId;
-        this.receiverUserName = receiverUserName;
+        this.participants = participants;
+        this.messages = messages;
         this.lastMessage = lastMessage;
-        this.lastTimeOpened = lastTimeOpened;
     }
 
     public String getDiscussionId() {
@@ -32,20 +39,26 @@ public class Discussion implements Serializable {
         this.discussionId = discussionId;
     }
 
-    public String getReceiverId() {
-        return receiverId;
+    public Map<String, Map<String, Object>> getParticipants() {
+        return participants;
     }
 
-    public void setReceiverId(String receiverId) {
-        this.receiverId = receiverId;
+    public void setParticipants(Map<String, Map<String, Object>> participants) {
+        this.participants = participants;
     }
 
-    public String getReceiverUserName() {
-        return receiverUserName;
+    public List<String> getOtherParticipants(String currentUserID) {
+        List<String> otherParticipants = new ArrayList<>(getParticipants().keySet());
+        otherParticipants.remove(currentUserID);
+        return otherParticipants;
     }
 
-    public void setReceiverUserName(String receiverUserName) {
-        this.receiverUserName = receiverUserName;
+    public Map<String, Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(Map<String, Message> messages) {
+        this.messages = messages;
     }
 
     public Message getLastMessage() {
@@ -56,24 +69,45 @@ public class Discussion implements Serializable {
         this.lastMessage = lastMessage;
     }
 
-    public String getLastTimeOpened() {
-        return lastTimeOpened;
-    }
-
-    public void setLastTimeOpened(String lastTimeOpened) {
-        this.lastTimeOpened = lastTimeOpened;
+    public Long getLastTimeOpened() {
+        if (participants == null || !participants.containsKey("lastTimeOpened")) {
+            return null;
+        }
+        return Long.valueOf(participants.get("lastTimeOpened").toString());
     }
 
     public Boolean isUnread() {
-        if (getLastMessage() == null || getLastTimeOpened() == null) {
-            return true;
-        } else {
-            Date lastMessageTime = new Date(Long.parseLong(getLastMessage().getDateTime()));
-            Date lastTimeOpened = new Date(Long.parseLong(getLastTimeOpened()));
-            if (getLastMessage().getSenderId().equals(getReceiverId())) {
-                return lastMessageTime.after(lastTimeOpened);
-            }
+        Long lastTimeOpened = null;
+
+        if (participants.get(currentUserId).containsKey("lastTimeOpened")) {
+            Log.d("CHECK UNREAD", "contains key");
+            lastTimeOpened = Long.valueOf(participants.get(currentUserId).get("lastTimeOpened").toString());  // Assuming this returns a Long
         }
-        return false;
+
+        Log.d("CHECK UNREAD", "isUnread: " + lastTimeOpened + " " + getLastMessage());
+
+        // Scenario 1: User has never opened it
+        if (lastTimeOpened == null) {
+            return true;
+        }
+
+        Message lastMessage = getLastMessage();
+
+        // Scenario 4: The last message was sent by the current user.
+        if (lastMessage != null && lastMessage.getSenderId().equals(currentUserId)) {
+            return false;
+        }
+
+        // Scenario 2: There's a last message and its timestamp is newer than the last time opened
+        if (lastMessage != null && lastMessage.getTimestamp() > lastTimeOpened) {
+            return true;
+        }
+
+        // Scenario 3: There's no last message and user has opened the conversation
+        if (lastMessage == null && lastTimeOpened != null) {
+            return false;
+        }
+
+        return false; // This is a fallback return, ideally shouldn't be reached
     }
 }

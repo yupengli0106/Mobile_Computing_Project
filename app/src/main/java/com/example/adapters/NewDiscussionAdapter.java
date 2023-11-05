@@ -22,6 +22,7 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
 
     private List<Friend> friends;
     private final String TAG = "NewDiscussionAdapter";
+
     public NewDiscussionAdapter(List<Friend> friends) {
         this.friends = friends;
     }
@@ -43,17 +44,18 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
                 v -> {
                     FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
                     String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    firebaseHelper.createDiscussion(currentUserId, friend.getUserId(), friend.getUsername(), new FirebaseHelper.AuthCallback() {
-                        @Override
-                        public void onSuccess() {
-                            Log.d(TAG, "onSuccess: discussion created");
-                        }
+                    firebaseHelper.createDiscussion(friend.getUserId(), new FirebaseHelper.CreateDiscussionCallback() {
+                                @Override
+                                public void onDiscussionCreated(String discussionId) {
+                                    Log.d(TAG, "onDiscussionCreated");
+                                }
 
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Log.d(TAG, "onFailure: failed to create discussion");
-                        }
-                    });
+                                @Override
+                                public void onFailed(Exception e) {
+                                    Log.d(TAG, "onFailed");
+                                }
+                            }
+                    );
                 }
         );
     }

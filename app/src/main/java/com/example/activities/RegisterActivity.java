@@ -44,7 +44,7 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        User newUser = new User(username, email, password, new HashMap<>());
+        User newUser = new User(username, email, password);
         // get instance of FirebaseHelper singleton class
         FirebaseHelper db = FirebaseHelper.getInstance();
         db.registerUser(email, password, newUser, new FirebaseHelper.AuthCallback() {

@@ -9,17 +9,15 @@ public class User {
     public String username;
     public String email;
     public String password;
-    public HashMap<String, String> discussions;
 
     public User() {
         // Default constructor is required for Firebase
     }
 
-    public User(String username, String email, String password, HashMap<String, String> discussions) {
+    public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.discussions = discussions;
     }
 
     public String getUserId() {
@@ -53,12 +51,5 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-
-    public HashMap<String,String> getDiscussions() {
-        return discussions;
-    }
-
-    public void setDiscussions(HashMap<String,String> discussions) {
-        this.discussions = discussions;
-    }
+    
 }

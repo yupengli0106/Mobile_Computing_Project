@@ -21,15 +21,18 @@ import com.example.managers.MessagesManager;
 import com.example.model.Discussion;
 import com.example.model.Message;
 import com.example.zenly.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DiscussionDetailFragment extends Fragment {
-
     private Discussion discussion;
 
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final String currentUserID = firebaseHelper.getCurrentUserId();
 
     public DiscussionDetailFragment() {
         // Required empty public constructor
@@ -64,7 +67,23 @@ public class DiscussionDetailFragment extends Fragment {
         Button sendButton = view.findViewById(R.id.send_button);
         Button backButton = view.findViewById(R.id.back_button);
         TextView receiverIdTextView = view.findViewById(R.id.receiver_text_view);
-        receiverIdTextView.setText(discussion.getReceiverUserName());
+        String receiverID = discussion.getOtherParticipants(currentUserID).get(0);
+
+        firebaseHelper.usersRef.child(receiverID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String username = dataSnapshot.child("username").getValue(String.class); // Assuming the field is named "username"
+                receiverIdTextView.setText(username);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
+            }
+        });
+
+
         EditText messageInput = view.findViewById(R.id.message_input);
 
         RecyclerView messagesRecyclerView = view.findViewById(R.id.messages_recycler_view);

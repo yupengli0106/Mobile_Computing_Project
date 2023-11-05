@@ -1,6 +1,7 @@
 package com.example.adapters;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,15 +10,22 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.helpers.FirebaseHelper;
 import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.User;
 import com.example.zenly.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
 public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.DiscussionViewHolder> {
     private List<Discussion> discussions;
+    private String currentUserId;
+
+    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     public interface OnDiscussionClickListener {
         void onDiscussionClick(Discussion discussion);
@@ -25,7 +33,8 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
 
     private OnDiscussionClickListener listener;
 
-    public DiscussionsAdapter(List<Discussion> discussions, OnDiscussionClickListener listener) {
+    public DiscussionsAdapter(String currentUserId, List<Discussion> discussions, OnDiscussionClickListener listener) {
+        this.currentUserId = currentUserId;
         this.discussions = discussions;
         this.listener = listener;
     }
@@ -39,16 +48,38 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
     }
 
     @Override
-    public void onBindViewHolder(DiscussionsAdapter.DiscussionViewHolder holder, @SuppressLint("RecyclerView") int position) {
+    public void onBindViewHolder(DiscussionsAdapter.DiscussionViewHolder holder,
+            @SuppressLint("RecyclerView") int position) {
         Discussion discussion = discussions.get(position);
-        holder.userName.setText(discussion.getReceiverUserName());
+        String receiverID = discussion.getOtherParticipants(currentUserId).get(0);
+        firebaseHelper.usersRef.child(receiverID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String username = dataSnapshot.child("username").getValue(String.class); // Assuming the field is named "username"
+                holder.userName.setText(username);
+                holder.userAvatar.setText(username.substring(0, 1).toUpperCase());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+                Log.w("TAG", "loadUserName:onCancelled", databaseError.toException());
+            }
+        });
+
+
+
         if (discussion.getLastMessage() == null) {
             holder.lastMessage.setText("");
             return;
         }
         holder.lastMessage.setText(discussion.getLastMessage().getContent());
+        if (discussion.isUnread()) {
+            holder.unreadBadge.setVisibility(View.VISIBLE);
+        } else {
+            holder.unreadBadge.setVisibility(View.GONE);
+        }
     }
-
 
     @Override
     public int getItemCount() {
@@ -60,20 +91,15 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
         public TextView lastMessage;
         public TextView unreadBadge;
 
-        public DiscussionViewHolder(View itemView, List<Discussion> discussions, final OnDiscussionClickListener listener) {
+        public TextView userAvatar;
+
+        public DiscussionViewHolder(View itemView, List<Discussion> discussions,
+                final OnDiscussionClickListener listener) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             lastMessage = itemView.findViewById(R.id.last_message);
             unreadBadge = itemView.findViewById(R.id.unread_badge);
-
-            // for each conversation, if it is unread, set the badge as visible
-            for (Discussion discussion : discussions) {
-                if (discussion.isUnread()) {
-                    unreadBadge.setVisibility(View.VISIBLE);
-                } else {
-                    unreadBadge.setVisibility(View.GONE);
-                }
-            }
+            userAvatar = itemView.findViewById(R.id.user_avatar);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();
@@ -89,4 +115,3 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
         notifyDataSetChanged();
     }
 }
-

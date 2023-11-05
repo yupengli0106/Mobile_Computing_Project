@@ -40,10 +40,9 @@ public class MessagesManager {
     }
 
     public void addMessage(Discussion discussion, String messageContent) {
-
         FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        firebaseHelper.sendMessage(discussion.getDiscussionId(), discussion.getReceiverId(), messageContent, new FirebaseHelper.AuthCallback() {
+        firebaseHelper.sendMessage(discussion.getDiscussionId(), messageContent, new FirebaseHelper.AuthCallback() {
             @Override
             public void onSuccess() {
                 Log.d(TAG, "onSuccess: discussion created");

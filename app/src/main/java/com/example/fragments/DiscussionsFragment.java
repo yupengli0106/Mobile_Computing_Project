@@ -26,11 +26,12 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 
-public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.OnDiscussionClickListener{
+public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.OnDiscussionClickListener {
 
     private final String TAG = "DiscussionsFragment";
 
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final String currentUserId = firebaseHelper.getCurrentUserId();
 
     private NewDiscussionAdapter newDiscussionAdapter;
 
@@ -51,7 +52,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_discussions, container, false);
     }
@@ -65,9 +66,10 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
         RecyclerView discussionRecyclerView = view.findViewById(R.id.discussions_list);
         discussionRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        DiscussionsAdapter discussionsAdapter = new DiscussionsAdapter(new ArrayList<>(), this);
+        DiscussionsAdapter discussionsAdapter = new DiscussionsAdapter(currentUserId, new ArrayList<>(), this);
         discussionRecyclerView.setAdapter(discussionsAdapter);
-        DiscussionsManager.getInstance().getDiscussions().observe(getViewLifecycleOwner(), discussionsAdapter::setDiscussionList);
+        DiscussionsManager.getInstance().getDiscussions().observe(getViewLifecycleOwner(),
+                discussionsAdapter::setDiscussionList);
     }
 
     private void showNewDiscussionDialog() {
@@ -95,8 +97,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
     @Override
     public void onDiscussionClick(Discussion discussion) {
-        Log.d(TAG, "onDiscussionClick: " + discussion);
-        Toast.makeText(getContext(), "Clicked on " + discussion, Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "onDiscussionClick: " + discussion.getDiscussionId());
         DiscussionDetailFragment detailFragment = DiscussionDetailFragment.newInstance(discussion);
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, detailFragment)

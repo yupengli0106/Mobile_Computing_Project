@@ -12,6 +12,8 @@ import com.example.model.FriendRequest;
 import com.example.model.LocationData;
 import com.example.model.Message;
 import com.example.model.User;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -23,8 +25,10 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,7 +90,7 @@ public class FirebaseHelper implements Serializable {
     // Firebase Realtime Database reference
     private final DatabaseReference myDatabase;
     // Firebase Realtime Database reference to the users node
-    private final DatabaseReference usersRef;
+    public final DatabaseReference usersRef;
     // Firebase Realtime Database reference to the locations node
     private final DatabaseReference locationsRef;
     // Firebase Realtime Database URL
@@ -201,197 +205,446 @@ public class FirebaseHelper implements Serializable {
                 .addOnFailureListener(e -> Log.w("uploadLocation", "uploadLocation: failure", e));
     }
 
-    public void getDiscussions(DiscussionsCallback callback) {
-        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        List<Discussion> discussions = new ArrayList<>();
-        usersRef.child(currentUser).child("discussions").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                Log.d("getDiscussions", "getDiscussions: success");
-                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-                    Discussion discussion = snapshot.getValue(Discussion.class);
-                    discussions.add(discussion);
-                }
-                callback.onCallback(discussions);
-            } else {
-                Log.w("getDiscussions", "getDiscussions: failure", task.getException());
-                callback.onCallback(null); // or an empty list
-            }
-        });
-    }
+//    public void fetchAndListenToDiscussions(DiscussionsManager manager) {
+//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        usersRef.child(currentUser).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+//                    String discussionID = childSnapshot.getKey();
+//
+//                    // Fetch the discussion object (if needed)
+//                    discussionsRef.child(discussionID).addListenerForSingleValueEvent(new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(DataSnapshot discussionSnapshot) {
+//                            Discussion discussion = discussionSnapshot.getValue(Discussion.class);
+//                            // Add discussion to your manager
+//                            manager.addNewDiscussion(discussion);
+//                            // Set listener on the last message for this discussion
+//                            attachLastMessageListener(discussionID, manager);
+//                        }
+//
+//                        @Override
+//                        public void onCancelled(DatabaseError error) {
+//                            // Handle error here
+//                        }
+//                    });
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError error) {
+//                // Handle error here
+//            }
+//        });
+//    }
+//
+//    public void attachLastMessageListener(String discussionID, DiscussionsManager manager) {
+//        discussionsRef.child(discussionID).child("lastMessage").addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Message lastMessage = dataSnapshot.getValue(Message.class);
+//                manager.updateDiscussion(discussionID, lastMessage);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError error) {
+//                // Handle error here
+//            }
+//        });
+//    }
+//
+//    public void listenForNewDiscussions(DiscussionsManager manager) {
+//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        usersRef.child(currentUser).child("discussions").addChildEventListener(new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+//                String newDiscussionID = dataSnapshot.getKey();
+//
+//                // Fetch the new discussion object (if needed)
+//                discussionsRef.child(newDiscussionID).addListenerForSingleValueEvent(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(DataSnapshot discussionSnapshot) {
+//                        Discussion newDiscussion = discussionSnapshot.getValue(Discussion.class);
+//                        // Add new discussion to your manager
+//                        manager.addNewDiscussion(newDiscussion);
+//                        // Attach a listener on the last message for this new discussion
+//                        attachLastMessageListener(newDiscussionID, manager);
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError error) {
+//                        // Handle error here
+//                    }
+//                });
+//            }
+//
+//            // Handle other ChildEventListener methods if needed...
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {}
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {}
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {}
+//        });
+//    }
+//
+//
+//    public void fetchDiscussions(DiscussionsManager manager) {
+//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        DatabaseReference userDiscussionsRef = usersRef.child(currentUser).child("discussions");
+//        userDiscussionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
+//                    String discussionID = discussionSnapshot.getKey();
+//                    fetchDiscussionDetails(manager, discussionID);
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.w(TAG, "Failed to read discussions.", databaseError.toException());
+//            }
+//        });
+//    }
+//
+//    private void fetchDiscussionDetails(DiscussionsManager manager, String discussionID) {
+//        DatabaseReference discussionRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID);
+//
+//        discussionRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
+//                if (discussion != null) {
+//                    discussion.setDiscussionId(dataSnapshot.getKey()); // This sets the discussionID in your Java object
+//                }
+//                // Update your UI with this discussion
+//                // e.g., add this discussion to an adapter for a RecyclerView
+//                //attachDiscussionMessageListener(discussionID);
+//                manager.addNewDiscussion(discussion);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.w(TAG, "Failed to read discussion details.", databaseError.toException());
+//            }
+//        });
+//    }
 
-    public void getConversationMessages(String discussionId, final MessagesCallback callback) {
-        List<Message> messages = new ArrayList<>();
-        discussionsRef.child(discussionId).child("messages").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                Log.d("getMessages", "getMessages: success");
-                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-                    Message message = snapshot.getValue(Message.class);
-                    messages.add(message);
-                }
-                callback.onCallback(messages);
-            } else {
-                Log.w("getMessages", "getMessages: failure", task.getException());
-                callback.onCallback(null); // or an empty list
-            }
-        });
-    }
+//    private void attachDiscussionMessageListener(DiscussionsManager manager, String discussionID) {
+//        DatabaseReference discussionMessagesRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID + "/messages");
+//
+//        ChildEventListener messageListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+//                Message newMessage = dataSnapshot.getValue(Message.class);
+//                // Update your UI with this new message
+//                // For instance, if you're using a RecyclerView to display messages,
+//                // you'd notify the adapter of a new item here.
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+//                Message updatedMessage = dataSnapshot.getValue(Message.class);
+//                // Handle changes to an existing message, if needed
+//            }
+//
+//            // Implement other ChildEventListener methods if needed
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//                // Handle a message being removed, if that's a feature in your app
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+//                // Handle a message being moved, though this is less common
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.w(TAG, "Listener was cancelled for discussion " + discussionID, databaseError.toException());
+//            }
+//        };
+//
+//        // Attach the listener
+//        discussionMessagesRef.addChildEventListener(messageListener);
+//
+//        // Optional: Keep a reference to the listener so you can remove it later if needed
+//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
+//    }
 
-    public interface MessagesCallback {
-        void onCallback(List<Message> messages);
-    }
+//    private void attachNewDiscussionListener(DiscussionsManager manager) {
+//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        DatabaseReference currentUserDiscussionRef = usersRef.child(currentUser).child("discussions");
+//
+//        ChildEventListener newDiscussionListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+//                String discussionId = dataSnapshot.getKey();
+//                fetchDiscussionDetails(manager, discussionId);
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+//                Message updatedMessage = dataSnapshot.getValue(Message.class);
+//                // Handle changes to an existing message, if needed
+//            }
+//
+//            // Implement other ChildEventListener methods if needed
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//                // Handle a message being removed, if that's a feature in your app
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+//                // Handle a message being moved, though this is less common
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//            }
+//        };
+//
+//        // Attach the listener
+//        currentUserDiscussionRef.addChildEventListener(newDiscussionListener);
+//
+//        // Optional: Keep a reference to the listener so you can remove it later if needed
+//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
+//    }
+//
+//    private void attachLastMessageListener(DiscussionsManager manager, String discussionID) {
+//        DatabaseReference discussionLastMessageRef = FirebaseDatabase.getInstance().getReference("discussions/" + discussionID + "/lastMessage");
+//
+//        ChildEventListener lastMessageListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+//                Message newMessage = dataSnapshot.getValue(Message.class);
+//                fetchDiscussionDetails(manager, discussionID);
+//            }
+//
+//            @Override
+//            public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
+//                Message updatedMessage = dataSnapshot.getValue(Message.class);
+//                fetchDiscussionDetails(manager, discussionID);
+//            }
+//
+//            // Implement other ChildEventListener methods if needed
+//            @Override
+//            public void onChildRemoved(DataSnapshot dataSnapshot) {
+//                // Handle a message being removed, if that's a feature in your app
+//            }
+//
+//            @Override
+//            public void onChildMoved(DataSnapshot dataSnapshot, String previousChildName) {
+//                // Handle a message being moved, though this is less common
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                Log.w(TAG, "Listener was cancelled for discussion " + discussionID, databaseError.toException());
+//            }
+//        };
+//
+//        // Attach the listener
+//        discussionLastMessageRef.addChildEventListener(lastMessageListener);
+//
+//        // Optional: Keep a reference to the listener so you can remove it later if needed
+//        // For instance, you could store it in a Map<String, ChildEventListener> with the discussionID as the key
+//    }
 
-    public void getConversationsMessages(final MessagesCallback callback) {
 
-    }
+//    public void getDiscussions(DiscussionsCallback callback) {
+//        String currentUser = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        List<Discussion> discussions = new ArrayList<>();
+//        usersRef.child(currentUser).child("discussions").get().addOnCompleteListener(task -> {
+//            if (task.isSuccessful() && task.getResult() != null) {
+//                Log.d("getDiscussions", "getDiscussions: success");
+//                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+//                    Discussion discussion = snapshot.getValue(Discussion.class);
+//                    discussions.add(discussion);
+//                }
+//                callback.onCallback(discussions);
+//            } else {
+//                Log.w("getDiscussions", "getDiscussions: failure", task.getException());
+//                callback.onCallback(null); // or an empty list
+//            }
+//        });
+//    }
 
-    public void createDiscussion(String fromUserId, String toUserId, String toUserName, final AuthCallback callback) {
-        String discussionId = usersRef.child(fromUserId).child("discussions").push().getKey();
-
-        // get fromUserName
-        usersRef.child(fromUserId).child("username").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                String fromUserName = task.getResult().getValue(String.class);
-                Log.d(TAG, "createDiscussion: " + fromUserId + " " + fromUserName + " " + toUserId + " " + toUserName + " " + discussionId);
-                if (discussionId == null) {
-                    callback.onFailure("Failed to create discussion");
-                    return;
-                }
-                HashMap<String, Object> senderDiscussion = new HashMap<>();
-                senderDiscussion.put("receiverId", toUserId);
-                senderDiscussion.put("receiverUserName", toUserName);
-                senderDiscussion.put("discussionId", discussionId);
-
-                HashMap<String, Object> receiverDiscussion = new HashMap<>();
-                receiverDiscussion.put("discussionId", discussionId);
-                receiverDiscussion.put("receiverId", fromUserId);
-                receiverDiscussion.put("receiverUserName", fromUserName);
-
-                discussionsRef.child(discussionId).setValue(senderDiscussion)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("FirebaseHelper", "Discussion created successfully.");
-                            callback.onSuccess();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-                        });
-
-                usersRef.child(fromUserId).child("discussions").child(discussionId).setValue(senderDiscussion)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("FirebaseHelper", "Discussion created successfully.");
-                            callback.onSuccess();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-                        });
-                usersRef.child(toUserId).child("discussions").child(discussionId).setValue(receiverDiscussion)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("FirebaseHelper", "Discussion created successfully.");
-                            callback.onSuccess();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
-                            callback.onFailure("Failed to create discussion: " + e.getMessage());
-                        });
-            } else {
-                Log.w("getMessages", "getMessages: failure", task.getException());
-                callback.onFailure("Failed to create discussion: " + task.getException().getMessage());
-            }
-        });
-    }
-
-    public void listenForNewDiscussions(DiscussionsManager manager, NewDiscussionsCallback callback) {
-        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        Query newConversationQuery = usersRef.child(currentUserId).child("discussions");
-        ChildEventListener childEventListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-                Discussion discussion = dataSnapshot.getValue(Discussion.class);
-                String discussionId = dataSnapshot.getKey();
-
-                if (discussion != null) {
-                    discussion.setDiscussionId(discussionId);
-                    callback.onNewConversationAdded(discussion);
-                    setDiscussionListener(discussionId, manager);
-                }
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-                // Handle changes if needed
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                // Handle removal if needed
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
-                // Handle moves if needed
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                callback.onNewConversationsError(databaseError.toException());
-            }
-        };
-
-        newConversationQuery.addChildEventListener(childEventListener);
-    }
-
-    public interface NewDiscussionsCallback {
-        void onNewConversationAdded(Discussion newDiscussion);
-
-        void onNewConversationsError(Exception exception);
-    }
-
-    public void listenForLastMessageUpdate(DiscussionsManager manager) {
-        String currentUserId = mAuth.getCurrentUser().getUid();
-
-        usersRef.child(currentUserId).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
-                    String discussionId = discussionSnapshot.getKey();
-                    setDiscussionListener(discussionId, manager);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle error
-            }
-        });
-    }
-
-    private void setDiscussionListener(String discussionId, DiscussionsManager manager) {
-        discussionsRef.child(discussionId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                Discussion discussion = dataSnapshot.getValue(Discussion.class);
-                if (discussion != null) {
-                    // Update your UI with the new discussion data, including the last message.
-                    manager.updateDiscussion(discussion);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle error
-            }
-        });
-    }
-
-    public interface LastMessageUpdateCallback {
-        void onLastMessageUpdated(String discussionId, Message lastMessage);
-
-        void onDiscussionError(Exception exception);
-    }
-
-    public void sendMessage(String discussionId, String receiverId, String content, final AuthCallback callback) {
+    //    public void getConversationMessages(String discussionId, final MessagesCallback callback) {
+//        List<Message> messages = new ArrayList<>();
+//        discussionsRef.child(discussionId).child("messages").get().addOnCompleteListener(task -> {
+//            if (task.isSuccessful() && task.getResult() != null) {
+//                Log.d("getMessages", "getMessages: success");
+//                for (DataSnapshot snapshot : task.getResult().getChildren()) {
+//                    Message message = snapshot.getValue(Message.class);
+//                    messages.add(message);
+//                }
+//                callback.onCallback(messages);
+//            } else {
+//                Log.w("getMessages", "getMessages: failure", task.getException());
+//                callback.onCallback(null); // or an empty list
+//            }
+//        });
+//    }
+//
+//    public interface MessagesCallback {
+//        void onCallback(List<Message> messages);
+//    }
+//
+//    public void createDiscussion(String fromUserId, String toUserId, String toUserName, final AuthCallback callback) {
+//        String discussionId = usersRef.child(fromUserId).child("discussions").push().getKey();
+//
+//        // get fromUserName
+//        usersRef.child(fromUserId).child("username").get().addOnCompleteListener(task -> {
+//            if (task.isSuccessful() && task.getResult() != null) {
+//                String fromUserName = task.getResult().getValue(String.class);
+//                Log.d(TAG, "createDiscussion: " + fromUserId + " " + fromUserName + " " + toUserId + " " + toUserName + " " + discussionId);
+//                if (discussionId == null) {
+//                    callback.onFailure("Failed to create discussion");
+//                    return;
+//                }
+//                HashMap<String, Object> senderDiscussion = new HashMap<>();
+//                senderDiscussion.put("receiverId", toUserId);
+//                senderDiscussion.put("receiverUserName", toUserName);
+//                senderDiscussion.put("discussionId", discussionId);
+//
+//                HashMap<String, Object> receiverDiscussion = new HashMap<>();
+//                receiverDiscussion.put("discussionId", discussionId);
+//                receiverDiscussion.put("receiverId", fromUserId);
+//                receiverDiscussion.put("receiverUserName", fromUserName);
+//
+//                discussionsRef.child(discussionId).setValue(senderDiscussion)
+//                        .addOnSuccessListener(aVoid -> {
+//                            Log.d("FirebaseHelper", "Discussion created successfully.");
+//                            callback.onSuccess();
+//                        })
+//                        .addOnFailureListener(e -> {
+//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+//                        });
+//
+//                usersRef.child(fromUserId).child("discussions").child(discussionId).setValue(senderDiscussion)
+//                        .addOnSuccessListener(aVoid -> {
+//                            Log.d("FirebaseHelper", "Discussion created successfully.");
+//                            callback.onSuccess();
+//                        })
+//                        .addOnFailureListener(e -> {
+//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+//                        });
+//                usersRef.child(toUserId).child("discussions").child(discussionId).setValue(receiverDiscussion)
+//                        .addOnSuccessListener(aVoid -> {
+//                            Log.d("FirebaseHelper", "Discussion created successfully.");
+//                            callback.onSuccess();
+//                        })
+//                        .addOnFailureListener(e -> {
+//                            Log.e("FirebaseHelper", "Failed to create discussion.", e);
+//                            callback.onFailure("Failed to create discussion: " + e.getMessage());
+//                        });
+//            } else {
+//                Log.w("getMessages", "getMessages: failure", task.getException());
+//                callback.onFailure("Failed to create discussion: " + task.getException().getMessage());
+//            }
+//        });
+//    }
+//
+//    public void listenForNewDiscussions(DiscussionsManager manager, NewDiscussionsCallback callback) {
+//        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+//        Query newConversationQuery = usersRef.child(currentUserId).child("discussions");
+//        ChildEventListener childEventListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
+//                String discussionId = dataSnapshot.getKey();
+//
+//                if (discussion != null) {
+//                    discussion.setDiscussionId(discussionId);
+//                    callback.onNewConversationAdded(discussion);
+//                    setDiscussionListener(discussionId, manager);
+//                }
+//            }
+//
+//            @Override
+//            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+//                // Handle changes if needed
+//            }
+//
+//            @Override
+//            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+//                // Handle removal if needed
+//            }
+//
+//            @Override
+//            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String previousChildName) {
+//                // Handle moves if needed
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//                callback.onNewConversationsError(databaseError.toException());
+//            }
+//        };
+//
+//        newConversationQuery.addChildEventListener(childEventListener);
+//    }
+//
+//    public interface NewDiscussionsCallback {
+//        void onNewConversationAdded(Discussion newDiscussion);
+//
+//        void onNewConversationsError(Exception exception);
+//    }
+//
+//    public void listenForLastMessageUpdate(DiscussionsManager manager) {
+//        String currentUserId = mAuth.getCurrentUser().getUid();
+//
+//        usersRef.child(currentUserId).child("discussions").addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                for (DataSnapshot discussionSnapshot : dataSnapshot.getChildren()) {
+//                    String discussionId = discussionSnapshot.getKey();
+//                    setDiscussionListener(discussionId, manager);
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                // Handle error
+//            }
+//        });
+//    }
+//
+//    private void setDiscussionListener(String discussionId, DiscussionsManager manager) {
+//        discussionsRef.child(discussionId).addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                Discussion discussion = dataSnapshot.getValue(Discussion.class);
+//                if (discussion != null) {
+//                    // Update your UI with the new discussion data, including the last message.
+//                    manager.updateDiscussion(discussion);
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError databaseError) {
+//                // Handle error
+//            }
+//        });
+//    }
+//
+//    public interface LastMessageUpdateCallback {
+//        void onLastMessageUpdated(String discussionId, Message lastMessage);
+//
+//        void onDiscussionError(Exception exception);
+//    }
+//
+    public void sendMessage(String discussionId, String content, final AuthCallback callback) {
         String messageId = discussionsRef.child(discussionId).child("messages").push().getKey();
+        Log.d(TAG, "sendMessage: " + discussionId + " " + content + " " + messageId);
 
         if (messageId == null) {
             callback.onFailure("Failed to send message");
@@ -399,9 +652,7 @@ public class FirebaseHelper implements Serializable {
         }
         String senderId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
         HashMap<String, Object> messageMap = new HashMap<>();
-        messageMap.put("messageId", messageId);
         messageMap.put("senderId", senderId);
-        messageMap.put("receiverId", receiverId);
         messageMap.put("content", content);
         messageMap.put("dateTime", String.valueOf(System.currentTimeMillis()));
 
@@ -427,6 +678,7 @@ public class FirebaseHelper implements Serializable {
     }
 
     public void listenForMessagesInDiscussion(String discussionId, NewMessageCallback callback) {
+        Log.d(TAG, "listenForMessagesInDiscussion: " + discussionId);
         DatabaseReference messagesRef = discussionsRef.child(discussionId).child("messages");
         messagesRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -437,7 +689,7 @@ public class FirebaseHelper implements Serializable {
                     String messageId = snapshot.getKey();
 
                     if (message != null) {
-                        message.setMessageId(messageId);
+                        //message.setMessageId(messageId);
                         newMessages.add(message);
                     }
                 }
@@ -451,9 +703,10 @@ public class FirebaseHelper implements Serializable {
         });
     }
 
+
     public void updateConversationLastTimeOpened(String discussionId) {
         String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-        usersRef.child(currentUserId).child("discussions").child(discussionId).child("lastTimeOpened").setValue(String.valueOf(System.currentTimeMillis()));
+        discussionsRef.child(discussionId).child("participants").child(currentUserId).child("lastTimeOpened").setValue(String.valueOf(System.currentTimeMillis()));
     }
 
     public interface NewMessageCallback {
@@ -690,6 +943,158 @@ public class FirebaseHelper implements Serializable {
             });
         }
     }
+
+
+    public void fetchUserDiscussions(final DiscussionListCallback callback) {
+        String uid = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
+        Query userDiscussionsQuery = discussionsRef.orderByChild("participants/" + uid + "/status").equalTo(true);
+
+        userDiscussionsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Discussion> discussions = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Discussion discussion = snapshot.getValue(Discussion.class);
+                    if (discussion != null) {
+//                        discussion.setDiscussionId(dataSnapshot.getKey());
+                        Log.d(TAG, "onDataChange: " + dataSnapshot.getKey());
+                        discussions.add(discussion);
+                    }
+                }
+                sortDiscussions(discussions);
+                callback.onDiscussionListReceived(discussions);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onFailed(databaseError.toException());
+            }
+        });
+    }
+
+
+    public void listenForDiscussionUpdates(final DiscussionUpdateCallback callback) {
+        String uid = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
+        Query userDiscussionsQuery = discussionsRef.orderByChild("participants/" + uid + "/status").equalTo(true);
+
+        userDiscussionsQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<Discussion> updatedDiscussions = new ArrayList<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Discussion discussion = snapshot.getValue(Discussion.class);
+                    if (discussion != null) {
+//                        discussion.setDiscussionId(dataSnapshot.getKey());
+                        updatedDiscussions.add(discussion);
+                    }
+                }
+                sortDiscussions(updatedDiscussions);
+                callback.onDiscussionUpdateReceived(updatedDiscussions);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onFailed(databaseError.toException());
+            }
+        });
+    }
+
+    public void createDiscussion(String otherParticipantID, final CreateDiscussionCallback callback) {
+        DatabaseReference newDiscussionRef = discussionsRef.push();
+        String discussionId = newDiscussionRef.getKey();
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
+        Discussion newDiscussion = new Discussion();
+        Map<String, Map<String, Object>> participants = new HashMap<>();
+        Map<String, Object> participantDetails = new HashMap<>();
+
+        participantDetails.put("status", true);
+
+        participants.put(currentUserId, participantDetails);
+        participants.put(otherParticipantID, participantDetails);
+
+        newDiscussion.setParticipants(participants);
+        newDiscussion.setDiscussionId(discussionId);
+
+        // Add other properties to the discussion as needed, e.g., timestamps
+
+        // Push the new discussion to Firebase
+        newDiscussionRef.setValue(newDiscussion)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        callback.onDiscussionCreated(newDiscussionRef.getKey()); // Return the ID of the newly created discussion
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        callback.onFailed(e);
+                    }
+                });
+
+    }
+
+    public interface CreateDiscussionCallback {
+        void onDiscussionCreated(String discussionId);
+
+        void onFailed(Exception e);
+    }
+
+
+    public interface DiscussionListCallback {
+        void onDiscussionListReceived(List<Discussion> discussionList);
+
+        void onFailed(Exception e);
+    }
+
+    public interface DiscussionUpdateCallback {
+        void onDiscussionUpdateReceived(List<Discussion> updatedDiscussionList);
+
+        void onFailed(Exception e);
+    }
+
+    public interface DiscussionDetailsCallback {
+        void onDiscussionDetailsReceived(List<Discussion> discussionList);
+
+        void onFailed(Exception e);
+    }
+
+
+    public void sortDiscussions(List<Discussion> discussions) {
+        Collections.sort(discussions, (d1, d2) -> {
+            Message message1 = d1.getLastMessage();
+            Message message2 = d2.getLastMessage();
+
+            // Check if discussions have a last message with a valid DateTime
+            boolean hasLastMessage1 = (message1 != null && message1.getDateTime() != null);
+            boolean hasLastMessage2 = (message2 != null && message2.getDateTime() != null);
+
+            // If neither discussion has a last message or valid DateTime
+            if (!hasLastMessage1 && !hasLastMessage2) {
+                return 0; // Consider other criteria for sorting if needed
+            }
+
+            // If only the first discussion doesn't have a last message, it should appear below
+            if (!hasLastMessage1) {
+                return 1;
+            }
+
+            // If only the second discussion doesn't have a last message, it should appear above
+            if (!hasLastMessage2) {
+                return -1;
+            }
+
+            // If both discussions have a last message, sort by the DateTime of the last message
+            Long time1 = Long.valueOf(message1.getDateTime());
+            Long time2 = Long.valueOf(message2.getDateTime());
+
+            return time2.compareTo(time1); // Descending order
+        });
+    }
+
 
 
 }
