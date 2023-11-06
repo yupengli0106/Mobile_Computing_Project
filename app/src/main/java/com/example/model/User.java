@@ -1,16 +1,28 @@
 package com.example.model;
 
+import java.util.List;
+import java.util.Map;
+
 public class User {
     public String userId;
     public String username;
     public String email;
-    public String step;
+    public Long step;
+public Map<String,String> friends;
 
-    public String getStep() {
-        return step;
+    public Map<String,String> getFriends() {
+        return friends;
     }
 
-    public void setStep(String step) {
+    public void setFriends(Map<String,String> friends) {
+        this.friends = friends;
+    }
+
+    public Long getStep() {
+        return step==null?0:step;
+    }
+
+    public void setStep(Long step) {
         this.step = step;
     }
 
