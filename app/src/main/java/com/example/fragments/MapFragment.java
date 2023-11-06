@@ -65,7 +65,6 @@ public class MapFragment extends Fragment {
     private FirebaseUser currentUser = null;
     private FriendManager friendManager;
 
-
     // callback method for when the map is ready
     private final OnMapReadyCallback callback = new OnMapReadyCallback() {
 
@@ -74,8 +73,10 @@ public class MapFragment extends Fragment {
          * This callback is triggered when the map is ready to be used.
          * This is where we can add markers or lines, add listeners or move the camera.
          * In this case, we just add a marker near Sydney, Australia.
-         * If Google Play services is not installed on the device, the user will be prompted to
-         * install it inside the SupportMapFragment. This method will only be triggered once the
+         * If Google Play services is not installed on the device, the user will be
+         * prompted to
+         * install it inside the SupportMapFragment. This method will only be triggered
+         * once the
          * user has installed Google Play services and returned to the app.
          */
         @Override
@@ -111,13 +112,14 @@ public class MapFragment extends Fragment {
         }
     };
 
-    public MapFragment() {}
+    public MapFragment() {
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
@@ -198,6 +200,7 @@ public class MapFragment extends Fragment {
 
     /**
      * Handle new location of a user
+     * 
      * @param userSnapshot snapshot of the user
      */
     private void handleNewLocation(@NonNull DataSnapshot userSnapshot) {
@@ -224,7 +227,7 @@ public class MapFragment extends Fragment {
         specificUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                //TODO: TBD if the username can be changed and need to update the usernameCache
+                // TODO: TBD if the username can be changed and need to update the usernameCache
                 String username = usernameCache.get(userId);
                 if (username == null) {
                     username = dataSnapshot.child("username").getValue(String.class);
@@ -240,7 +243,6 @@ public class MapFragment extends Fragment {
             }
         });
     }
-
 
     /**
      * Update the marker on the map

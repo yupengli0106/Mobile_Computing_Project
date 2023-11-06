@@ -44,7 +44,7 @@
         <activity android:name="com.example.activities.LoginActivity" />
         <activity
             android:name="com.example.activities.MainActivity"
-            android:windowSoftInputMode="stateVisible|adjustPan" />
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <!-- location service -->
         <service android:name="com.example.services.LocationService" />

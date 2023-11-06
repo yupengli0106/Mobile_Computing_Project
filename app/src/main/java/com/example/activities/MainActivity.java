@@ -13,11 +13,14 @@ import androidx.fragment.app.FragmentManager;
 import com.example.fragments.ChatFragment;
 import com.example.fragments.FriendsFragment;
 import com.example.fragments.MapFragment;
+import com.example.fragments.DiscussionsFragment;
 import com.example.fragments.ProfileFragment;
 import com.example.fragments.TopListFragment;
 import com.example.helpers.FirebaseHelper;
+import com.example.managers.DiscussionsManager;
 import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
+import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.FriendRequest;
 import com.example.zenly.R;
@@ -31,13 +34,18 @@ public class MainActivity extends AppCompatActivity {
     private final FragmentManager fragmentManager = getSupportFragmentManager();
     // reuse mapFragment
     private final MapFragment mapFragment = new MapFragment();
+    private final DiscussionsFragment discussionsFragment = new DiscussionsFragment();
     private final ChatFragment chatFragment = new ChatFragment();
     private final FriendsFragment friendsFragment = new FriendsFragment();
     private final ProfileFragment profileFragment = new ProfileFragment();
+
     private final TopListFragment topListFragment = new TopListFragment();
     private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
+
     private BadgeDrawable friendRequestsBadge;
+
+    private BadgeDrawable discussionUpdatesBadge;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,21 +54,22 @@ public class MainActivity extends AppCompatActivity {
 
         // initialize bottom navigation view
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
-        //set badge for friends_nav(request)
+        // set badge for friends_nav(request)
         friendRequestsBadge = bottomNavigationView.getOrCreateBadge(R.id.nav_friends);
 
+        discussionUpdatesBadge = bottomNavigationView.getOrCreateBadge(R.id.nav_chat);
 
         // set map fragment as default fragment
         fragmentManager.beginTransaction().replace(R.id.fragment_container, mapFragment).commit();
 
         bottomNavigationView.setSelectedItemId(R.id.nav_map);
 
-        //listen the friendrequest
+        // listen the friendrequest
         firebaseHelper.listenForFriendRequests(new FirebaseHelper.FriendRequestCallback() {
             @Override
             public void onFriendRequestReceived(List<FriendRequest> friendRequests) {
                 FriendRequestManager.getInstance().setFriendRequests(friendRequests);
-                //update the badge
+                // update the badge
                 if (friendRequestsBadge != null) {
                     if (friendRequests.size() == 0) {
                         friendRequestsBadge.setVisible(false);
@@ -74,11 +83,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFriendRequestError(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the friend requests: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "can not get the friend requests: " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         });
 
-        //listen for friend list
+        // listen for friend list
         firebaseHelper.listenForFriendsList(new FirebaseHelper.FriendsListCallback() {
             @Override
             public void onFriendsListReceived(List<Friend> friendsList) {
@@ -91,19 +101,73 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailed(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the friend list: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "can not get the friend list: " + e.getMessage(), Toast.LENGTH_LONG)
+                        .show();
+            }
+        });
+
+        firebaseHelper.fetchUserDiscussions(new FirebaseHelper.DiscussionListCallback() {
+            @Override
+            public void onDiscussionListReceived(List<Discussion> discussionList) {
+                DiscussionsManager.getInstance().setDiscussions(discussionList);
+                int unreadCount = 0;
+                for (Discussion discussion : discussionList) {
+                    if (discussion.isUnread()) {
+                        unreadCount++;
+                    }
+                }
+                if (discussionUpdatesBadge != null) {
+                    if (unreadCount == 0) {
+                        discussionUpdatesBadge.setVisible(false);
+                    } else {
+                        discussionUpdatesBadge.setNumber(unreadCount);
+                        discussionUpdatesBadge.setVisible(true);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailed(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
+                        .show();
+            }
+        });
+
+        firebaseHelper.listenForDiscussionUpdates(new FirebaseHelper.DiscussionUpdateCallback() {
+            @Override
+            public void onDiscussionUpdateReceived(List<Discussion> updatedDiscussionList) {
+                DiscussionsManager.getInstance().setDiscussions(updatedDiscussionList);
+                int unreadCount = 0;
+                for (Discussion discussion : updatedDiscussionList) {
+                    if (discussion.isUnread()) {
+                        unreadCount++;
+                    }
+                }
+                if (discussionUpdatesBadge != null) {
+                    if (unreadCount == 0) {
+                        discussionUpdatesBadge.setVisible(false);
+                    } else {
+                        discussionUpdatesBadge.setNumber(unreadCount);
+                        discussionUpdatesBadge.setVisible(true);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailed(Exception e) {
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
+                        .show();
             }
         });
 
 
-        //setOnNavigationItemSelectedListener
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
             if (itemId == R.id.nav_map) {
                 selectedFragment = new MapFragment();
             } else if (itemId == R.id.nav_chat) {
-                selectedFragment = chatFragment;
+                selectedFragment = discussionsFragment;
             } else if (itemId == R.id.nav_profile) {
                 selectedFragment = profileFragment;
             } else if (itemId == R.id.nav_friends) {
@@ -153,4 +217,3 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
