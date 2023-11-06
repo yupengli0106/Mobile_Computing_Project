@@ -14,6 +14,7 @@ import com.example.fragments.ChatFragment;
 import com.example.fragments.FriendsFragment;
 import com.example.fragments.MapFragment;
 import com.example.fragments.ProfileFragment;
+import com.example.fragments.TopListFragment;
 import com.example.helpers.FirebaseHelper;
 import com.example.managers.FriendManager;
 import com.example.managers.FriendRequestManager;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private final ChatFragment chatFragment = new ChatFragment();
     private final FriendsFragment friendsFragment = new FriendsFragment();
     private final ProfileFragment profileFragment = new ProfileFragment();
+    private final TopListFragment topListFragment = new TopListFragment();
     private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
     private BadgeDrawable friendRequestsBadge;
@@ -83,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
                 FriendManager.getInstance().setFriendsList(friendsList);
                 Log.d("FriendsListUpdate", "Updated friends list:");
                 for (Friend friend : friendsList) {
-                    // 假设 Friend 类有一个名为 getName 的方法来获取朋友的名字
                     Log.d("FriendsListUpdate", "Friend: " + friend.toString());
                 }
             }
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = profileFragment;
             } else if (itemId == R.id.nav_friends) {
                 selectedFragment = friendsFragment;
+            }else if (itemId == R.id.nav_top) {
+                selectedFragment = topListFragment;
             }
 
             if (selectedFragment != null) {
