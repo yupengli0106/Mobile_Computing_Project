@@ -69,6 +69,7 @@ public class StepService extends Service {
     private void addStepCounterListener() {
         StepSPHelper.setSupportStep(this, true);
         if (null != mStepCounter) {
+            mStepCounter.setZeroAndBoot(mIsSeparate, mIsBoot);
             return;
         }
         Sensor countSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
