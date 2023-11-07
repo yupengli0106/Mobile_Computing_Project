@@ -5,12 +5,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.helpers.FirebaseHelper;
+import com.example.helpers.ImageHelper;
 import com.example.model.FriendRequest;
 import com.example.zenly.R;
 
@@ -18,6 +20,7 @@ import java.util.List;
 
 public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAdapter.FriendRequestViewHolder> {
     private List<FriendRequest> friendRequests;
+    private final ImageHelper imageHelper = new ImageHelper();
 
     public FriendRequestsAdapter(List<FriendRequest> friendRequests) {
         this.friendRequests = friendRequests;
@@ -25,8 +28,7 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
 
     public FriendRequestViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.friend_requests_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.friend_requests_item, parent, false);
         return new FriendRequestViewHolder(itemView);
     }
 
@@ -37,9 +39,7 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
 
 
         holder.userName.setText(friendRequest.getRequester());
-
-
-        holder.userAvatar.setText(friendRequest.getRequester().substring(0, 1).toUpperCase());
+        imageHelper.fetchAndSetUserProfileImage(friendRequest.getFromUserId(), holder.userPic, holder.userAvatar);
 
         FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
         holder.acceptButton.setOnClickListener(new View.OnClickListener() {
@@ -91,12 +91,15 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
         public TextView userName, userAvatar;
         public Button acceptButton, refuseButton;
 
+        public ImageView userPic;
+
         public FriendRequestViewHolder(View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             userAvatar = itemView.findViewById(R.id.user_avatar);
             acceptButton = itemView.findViewById(R.id.accept_button);
             refuseButton = itemView.findViewById(R.id.refuse_button);
+            userPic = itemView.findViewById(R.id.profileImageView);
         }
     }
 

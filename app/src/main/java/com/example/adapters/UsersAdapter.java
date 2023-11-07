@@ -4,12 +4,14 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.helpers.FirebaseHelper;
+import com.example.helpers.ImageHelper;
 import com.example.managers.FriendManager;
 import com.example.model.User;
 import com.example.zenly.R;
@@ -22,6 +24,8 @@ import java.util.List;
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHolder> {
 
     private List<User> userList;
+
+    private final ImageHelper imageHelper = new ImageHelper();
 
 
     public UsersAdapter(List<User> userList) {
@@ -42,7 +46,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     public void onBindViewHolder(UserViewHolder holder, int position) {
         User currentUser = userList.get(position);
         holder.userName.setText(currentUser.username);
-        holder.userAvatar.setText(currentUser.username.substring(0, 1).toUpperCase());
+        imageHelper.fetchAndSetUserProfileImage(currentUser.getUserId(), holder.userPic, holder.userAvatar);
         holder.userEmail.setText(currentUser.email);
 
         //Me situation
@@ -115,6 +119,8 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         public FloatingActionButton addFriendButton;
         public TextView userStatus;
 
+        public ImageView userPic;
+
         public UserViewHolder(View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
@@ -122,6 +128,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
             addFriendButton = itemView.findViewById(R.id.add_friend_button);
             userEmail = itemView.findViewById((R.id.user_email));
             userStatus = itemView.findViewById(R.id.user_status);
+            userPic = itemView.findViewById(R.id.profileImageView);
         }
     }
 

@@ -5,11 +5,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.helpers.FirebaseHelper;
+import com.example.helpers.ImageHelper;
 import com.example.model.Friend;
 import com.example.zenly.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -21,6 +23,8 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
 
     private List<Friend> friends;
     private final String TAG = "NewDiscussionAdapter";
+
+    private final ImageHelper imageHelper = new ImageHelper();
 
     public NewDiscussionAdapter(List<Friend> friends) {
         this.friends = friends;
@@ -37,7 +41,8 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
     public void onBindViewHolder(NewDiscussionAdapter.NewDiscussionViewHolder holder, @SuppressLint("RecyclerView") int position) {
         Friend friend = friends.get(position);
         holder.userName.setText(friend.getUsername());
-        holder.userAvatar.setText(friend.getUsername().substring(0, 1).toUpperCase());
+
+        imageHelper.fetchAndSetUserProfileImage(friend.getUserId(), holder.userPic, holder.userAvatar);
 
         holder.newDiscussionButton.setOnClickListener(
                 v -> {
@@ -68,11 +73,14 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
         public TextView userName, userAvatar;
         public FloatingActionButton newDiscussionButton;
 
+        public ImageView userPic;
+
         public NewDiscussionViewHolder(View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             userAvatar = itemView.findViewById(R.id.user_avatar);
             newDiscussionButton = itemView.findViewById(R.id.new_discussion_button);
+            userPic = itemView.findViewById(R.id.profileImageView);
         }
     }
 

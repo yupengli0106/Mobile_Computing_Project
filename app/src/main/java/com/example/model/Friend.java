@@ -4,15 +4,17 @@ public class Friend {
     private String userId;
     private String username;
     private String email;
+    private String profileImageUrl;
     
     public Friend() {
 
     }
 
-    public Friend(String userId, String username, String email) {
+    public Friend(String userId, String username, String email, String profileImageUrl) {
         this.userId = userId;
         this.username = username;
         this.email = email;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public String getUserId() {
@@ -39,12 +41,21 @@ public class Friend {
         this.email = email;
     }
 
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
     @Override
     public String toString() {
         return "Friend{" +
                 "userId='" + userId + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
+                ", profileImageUrl='" + profileImageUrl + '\'' +
                 '}';
     }
 }
