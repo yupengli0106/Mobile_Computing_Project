@@ -265,20 +265,30 @@ public class MapFragment extends Fragment {
                 existingMarker.setTitle("User: " + username);
                 existingMarker.setSnippet("Speed: " + speed +" m/s" + "\n"
                         + "Battery: " + batteryLevel + "%" + "\n"
-                        + "Last Update: " + lastUpdateTime + " minutes ago");
+                        + "Last Update: " + formatUpdateTime(lastUpdateTime));
             } else {
                 Marker newMarker = myMap.addMarker(new MarkerOptions()
                         .position(newLocation)
                         .title("User: " + username)
                         .snippet("Speed: " + speed + " m/s" + "\n"
                                 + "Battery: " + batteryLevel + "%" + "\n"
-                                + "Last Update: " + lastUpdateTime + " minutes ago"));
+                                + "Last Update: " + formatUpdateTime(lastUpdateTime)));
                 userMarkers.put(userId, newMarker);
             }
             if (currentUser != null && userId.equals(currentUser.getUid()) && isFirstLoad) {
                 myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel));
                 isFirstLoad = false;
             }
+        }
+    }
+
+    private String formatUpdateTime(int minutes) {
+        if (minutes < 60) {
+            return minutes + " minutes ago";
+        } else if (minutes < 1440) { // Less than 24 hours
+            return (minutes / 60) + "h ago";
+        } else { // 24 hours or more
+            return (minutes / 1440) + "d ago";
         }
     }
 
