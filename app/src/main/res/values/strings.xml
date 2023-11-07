@@ -15,11 +15,13 @@
     <string name="map">Map</string>
 
     <string name="profile">Profile</string>
+    <string name="top">top</string>
     <string name="add_friend">ADD FRIEND</string>
     <string name="search_friends">search friends</string>
     <string name="search_users">search users</string>
 
     <string name="forgot_your_password">Forgot your password?</string>
     <string name="logout">Logout</string>
+    <string name="steps">Steps</string>
 
 </resources>

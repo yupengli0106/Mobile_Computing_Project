@@ -21,7 +21,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseUser;
@@ -215,9 +214,13 @@ public class MapFragment extends Fragment {
         Float speedValue = userSnapshot.child("speed").getValue(Float.class);
         float speed = (speedValue != null) ? speedValue : 0.0f;
         Long timestampValue = userSnapshot.child("timestamp").getValue(Long.class);
-        long timestamp = (timestampValue != null) ? timestampValue : 0L;// TODO: last update time
+        long timestamp = (timestampValue != null) ? timestampValue : 0L;
         Integer batteryLevelValue = userSnapshot.child("batteryLevel").getValue(Integer.class);
         int batteryLevel = (batteryLevelValue != null) ? batteryLevelValue : 0;
+        // last update time of the user's location
+        long currentTime = System.currentTimeMillis();
+        long timeDifference = currentTime - timestamp;
+        int lastUpdateTime = (int) (timeDifference / 1000 / 60); // convert to minutes
 
         // create a LatLng object from the latitude and longitude values
         LatLng newLocation = new LatLng(latitude, longitude);
@@ -234,7 +237,7 @@ public class MapFragment extends Fragment {
                     usernameCache.put(userId, username);
                 }
                 // update the marker on the map after getting the username
-                updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL, username, speed, batteryLevel);
+                updateMapMarker(userId, newLocation, DEFAULT_ZOOM_LEVEL, username, speed, batteryLevel,lastUpdateTime);
             }
 
             @Override
@@ -253,19 +256,23 @@ public class MapFragment extends Fragment {
      * @param speed speed of the user
      * @param batteryLevel battery level of the user's device
      */
-    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed, int batteryLevel) {
+    private void updateMapMarker(String userId, LatLng newLocation, float zoomLevel, String username, float speed, int batteryLevel, int lastUpdateTime) {
+        speed = Math.round(speed * 100.0f) / 100.0f; // round to 2 decimal places
         if (myMap != null) {
             Marker existingMarker = userMarkers.get(userId); // get the existing marker
             if (existingMarker != null) {
                 existingMarker.setPosition(newLocation); // update the existing marker's position
                 existingMarker.setTitle("User: " + username);
-                existingMarker.setSnippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel + "%");
-                existingMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                existingMarker.setSnippet("Speed: " + speed +" m/s" + "\n"
+                        + "Battery: " + batteryLevel + "%" + "\n"
+                        + "Last Update: " + lastUpdateTime + " minutes ago");
             } else {
                 Marker newMarker = myMap.addMarker(new MarkerOptions()
                         .position(newLocation)
                         .title("User: " + username)
-                        .snippet("Speed: " + speed + "\n" + "Battery: " + batteryLevel + "%"));
+                        .snippet("Speed: " + speed + " m/s" + "\n"
+                                + "Battery: " + batteryLevel + "%" + "\n"
+                                + "Last Update: " + lastUpdateTime + " minutes ago"));
                 userMarkers.put(userId, newMarker);
             }
             if (currentUser != null && userId.equals(currentUser.getUid()) && isFirstLoad) {
@@ -286,12 +293,10 @@ public class MapFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Remove the listener using the member variable to avoid memory leaks
-        // foreground service will keep running even if the app is closed
-        //TODO: foreground service will be stopped when the user logs out
-//        if (myValueEventListener != null && locationsRef != null) {
-//            locationsRef.removeEventListener(myValueEventListener);
-//        }
+        // remove the ValueEventListener when the map fragment is destroyed
+        if (myValueEventListener != null && locationsRef != null) {
+            locationsRef.removeEventListener(myValueEventListener);
+        }
     }
 
 }

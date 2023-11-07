@@ -173,7 +173,11 @@ public class LocationService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // stop location updates
         myFusedLocationClient.removeLocationUpdates(myLocationCallback);
+        // stop foreground service
+        stopForeground(true);
+        Log.d(TAG, "onDestroy: location service destroyed");
     }
 
     /**

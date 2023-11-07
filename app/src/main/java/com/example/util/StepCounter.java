@@ -28,6 +28,7 @@ public class StepCounter implements SensorEventListener {
     private int sCurrStep;
     private String mTodayDate;
     private boolean mIsCleanStep;
+    private boolean mIsShutdown;
     private boolean mIsCounterStepReset = true;
     private Context mContext;
     private boolean mIsSeparate;
@@ -74,7 +75,7 @@ public class StepCounter implements SensorEventListener {
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     User user = dataSnapshot.getValue(User.class);
                     if (user != null) {
-                        user.setStep(sCurrStep + "");
+                        user.setStep((long) sCurrStep);
                         String userId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
                         usersRef.child(userId).setValue(user);
                     }
@@ -85,6 +86,7 @@ public class StepCounter implements SensorEventListener {
                     Log.d("TAG", "Get username failed: " + databaseError.getMessage());
                 }
             });
+            dateChangeCleanStep();
         }
     }
 
@@ -99,6 +101,28 @@ public class StepCounter implements SensorEventListener {
         StepSPHelper.setStepOffset(mContext, sOffsetStep);
         mIsCleanStep = false;
         StepSPHelper.setCleanStep(mContext, false);
+    }
+
+    public void setZeroAndBoot(boolean separate, boolean boot) {
+        mIsSeparate = separate;
+        mIsBoot = boot;
+    }
+
+    private synchronized void dateChangeCleanStep() {
+        if (!getTodayDate().equals(mTodayDate) || mIsSeparate) {
+            mIsCleanStep = true;
+            StepSPHelper.setCleanStep(mContext, true);
+            mTodayDate = getTodayDate();
+            StepSPHelper.setStepToday(mContext, mTodayDate);
+            mIsBoot = false;
+            mIsSeparate = false;
+            sCurrStep = 0;
+            StepSPHelper.setCurrentStep(mContext, sCurrStep);
+        }
+    }
+
+    private String getTodayDate() {
+        return StepDateUtils.getCurrentDate("yyyy-MM-dd");
     }
 
 
