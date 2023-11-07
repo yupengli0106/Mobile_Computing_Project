@@ -61,9 +61,7 @@
         </activity>
         <activity android:name="com.example.activities.RegisterActivity" />
         <activity android:name="com.example.activities.LoginActivity" />
-        <activity
-            android:name="com.example.activities.MainActivity"
-            android:windowSoftInputMode="stateVisible|adjustResize" />
+        <activity android:name="com.example.activities.MainActivity" />
 
         <!-- location service -->
         <service android:name="com.example.services.LocationService" />
