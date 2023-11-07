@@ -1,15 +1,14 @@
 package com.example.fragments;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
@@ -17,9 +16,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.content.Intent;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,71 +31,34 @@ import com.bumptech.glide.Glide;
 import com.example.activities.WelcomeActivity;
 import com.example.helpers.CameraHelper;
 import com.example.helpers.FirebaseHelper;
-import com.example.model.User;
 import com.example.services.LocationService;
 import com.example.util.StepUtil;
 import com.example.zenly.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ProfileFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class ProfileFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final String TAG = "ProfileFragment";
 
-    private ActivityResultLauncher<String> requestPermissionLauncher;
-    private ActivityResultLauncher<Uri> takePictureLauncher;
-    private ActivityResultLauncher<String> pickImageLauncher;
-
     private CameraHelper cameraHelper;
-
-//    private CameraHelper cameraHelper;
-
 
     public ProfileFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ProfileFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ProfileFragment newInstance(String param1, String param2) {
+    public static ProfileFragment newInstance() {
         ProfileFragment fragment = new ProfileFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -99,32 +66,64 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         Button logoutButton = view.findViewById(R.id.logoutButton);
-        // Initialize TextViews
         TextView usernameTextView = view.findViewById(R.id.usernameTextView);
         TextView emailTextView = view.findViewById(R.id.emailTextView);
         TextView tvStep = view.findViewById(R.id.tvStep);
         ImageView imageView = view.findViewById(R.id.profileImageView);
         Button updateProfileButton = view.findViewById(R.id.updateProfileButton);
+        TextView tvBirthdate = view.findViewById(R.id.tvBirthdateValue);
+        Button buttonBirthdate = view.findViewById(R.id.buttonSelectBirthdate);
+        Spinner spinnerGender = view.findViewById(R.id.spinnerGender);
+        EditText etBio = view.findViewById(R.id.etBio);
 
-        fetchAndSetUserProfileImage(imageView);
+        fetchAndSetUserDetails(usernameTextView, emailTextView, imageView, tvBirthdate, spinnerGender, etBio);
 
-        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        buttonBirthdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Calendar c = Calendar.getInstance();
+                int year = c.get(Calendar.YEAR);
+                int month = c.get(Calendar.MONTH);
+                int day = c.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(),
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + year;
+                                tvBirthdate.setText(selectedDate);
+                            }
+                        }, year, month, day);
+                datePickerDialog.show();
+            }
+        });
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.gender_array, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerGender.setAdapter(adapter);
+
+        spinnerGender.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String gender = parent.getItemAtPosition(position).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
                 // Permission is granted. Continue the action or workflow in your app.
             } else {
@@ -136,7 +135,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        takePictureLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), result -> {
+        ActivityResultLauncher<Uri> takePictureLauncher = registerForActivityResult(new ActivityResultContracts.TakePicture(), result -> {
             if (result) {
                 // Update ImageView with new photo
                 Uri imageUri = Uri.parse(cameraHelper.getCurrentPhotoPath());
@@ -145,7 +144,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        ActivityResultLauncher<String> pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 imageView.setImageURI(uri);
                 cameraHelper.setCurrentPhotoPath(uri.toString());
@@ -162,36 +161,9 @@ public class ProfileFragment extends Fragment {
 
         Button btnAddImage = view.findViewById(R.id.button_change_picture);
         btnAddImage.setOnClickListener(v -> {
-            // Show a dialog or a popup menu to choose between camera and gallery
-            // Or simply call openCamera() or openGallery() directly if there's a dedicated button
-//            openCamera();
             showImagePickerDialog();
         });
         tvStep.append(StepUtil.getTodayStep(getContext()) + "");
-
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users");
-        // get current user id
-        String userId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
-
-        databaseReference.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                if (user != null) {
-                    String username = user.getUsername();
-                    String email = user.getEmail();
-                    // set context to TextView
-                    usernameTextView.setText("Username: " + username);
-                    emailTextView.setText("Email: " + email);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.d(TAG, "Get username failed: " + databaseError.getMessage());
-            }
-        });
-
 
         logoutButton.setOnClickListener(v -> {
             // Stop location service
@@ -212,6 +184,10 @@ public class ProfileFragment extends Fragment {
 
         updateProfileButton.setOnClickListener(v -> {
             String photoPath = cameraHelper.getCurrentPhotoPath();
+            String birthdate = tvBirthdate.getText().toString();
+            String gender = spinnerGender.getSelectedItem().toString();
+            String bio = etBio.getText().toString();
+
             if (photoPath != null) {
                 File photoFile = new File(photoPath);
                 Uri photoUri = FileProvider.getUriForFile(
@@ -219,11 +195,9 @@ public class ProfileFragment extends Fragment {
                         getContext().getPackageName() + ".provider",
                         photoFile
                 );
-
                 cameraHelper.uploadImageToFirebaseStorage(photoUri);
-            } else {
-                Toast.makeText(getContext(), "No image selected", Toast.LENGTH_SHORT).show();
             }
+            updateUserDetails(birthdate, bio, gender);
         });
 
 
@@ -250,18 +224,44 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
-    public void fetchAndSetUserProfileImage(ImageView imageView) {
+    public void fetchAndSetUserDetails(TextView usernameTextView, TextView emailTextView, ImageView imageView, TextView birthdateTextView, Spinner genderSpinner, EditText bioEditText) {
         String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
         firebaseHelper.usersRef.child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists() && dataSnapshot.hasChild("profileImageUrl")) {
-                    String imageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        // Use Glide to load the image
-                        Glide.with(getContext())
-                                .load(imageUrl)
-                                .into(imageView);
+                if (dataSnapshot.exists()) {
+                    if (dataSnapshot.hasChild("profileImageUrl")) {
+                        String imageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
+                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                            // Use Glide to load the image
+                            Glide.with(getContext())
+                                    .load(imageUrl)
+                                    .into(imageView);
+                        }
+                    }
+                    if (dataSnapshot.hasChild("username")) {
+                        String username = dataSnapshot.child("username").getValue(String.class);
+                        usernameTextView.setText(username);
+                    }
+                    if (dataSnapshot.hasChild("email")) {
+                        String email = dataSnapshot.child("email").getValue(String.class);
+                        emailTextView.setText(email);
+                    }
+                    if (dataSnapshot.hasChild("birthdate")) {
+                        String birthdate = dataSnapshot.child("birthdate").getValue(String.class);
+                        birthdateTextView.setText(birthdate);
+                    }
+                    if (dataSnapshot.hasChild("gender")) {
+                        String gender = dataSnapshot.child("gender").getValue(String.class);
+                        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
+                                R.array.gender_array, android.R.layout.simple_spinner_item);
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        genderSpinner.setAdapter(adapter);
+                        genderSpinner.setSelection(adapter.getPosition(gender));
+                    }
+                    if (dataSnapshot.hasChild("bio")) {
+                        String bio = dataSnapshot.child("bio").getValue(String.class);
+                        bioEditText.setText(bio);
                     }
                 }
             }
@@ -270,6 +270,30 @@ public class ProfileFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.w(TAG, "loadUserProfileImage:onCancelled", databaseError.toException());
             }
+        });
+    }
+
+    private void updateUserDetails(String birthdate, String bio, String gender) {
+        String currentUserId = Objects.requireNonNull(mAuth.getCurrentUser()).getUid();
+
+        Map<String, Object> updates = new HashMap<>();
+        if (birthdate != null && !birthdate.isEmpty()) {
+            updates.put("birthdate", birthdate);
+        }
+        if (gender != null && !gender.isEmpty()) {
+            updates.put("gender", gender);
+        }
+        if (bio != null && !bio.isEmpty()) {
+            updates.put("bio", bio);
+        }
+
+        // Update the child with the new map
+        firebaseHelper.usersRef.child(currentUserId).updateChildren(updates).addOnSuccessListener(aVoid -> {
+            // Update UI or inform the user of success
+            Toast.makeText(getContext(), "User profile updated", Toast.LENGTH_SHORT).show();
+        }).addOnFailureListener(e -> {
+            // Handle any errors
+            Toast.makeText(getContext(), "Failed to update user profile", Toast.LENGTH_SHORT).show();
         });
     }
 

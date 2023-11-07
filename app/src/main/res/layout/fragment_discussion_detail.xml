@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    tools:context="com.example.fragments.ConversationFragment">
+    tools:context="com.example.fragments.DiscussionDetailFragment">
 
     <LinearLayout
         android:id="@+id/top_bar"
@@ -55,6 +55,7 @@
             android:background="@drawable/chat_background_input"
             android:ems="10"
             android:inputType="text"
+            android:textColorHint="white"
             android:hint="Type a message"
             android:textColor="@color/white"
             android:paddingLeft="10dp"

@@ -3,6 +3,7 @@ package com.example.fragments;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @OptIn(markerClass = ExperimentalBadgeUtils.class)
-public class FriendsFragment extends Fragment {
+public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriendClickListener {
     private UsersAdapter usersAdapter;
 
     private FriendRequestsAdapter friendRequestsAdapter;
@@ -87,7 +88,7 @@ public class FriendsFragment extends Fragment {
         SearchBar searchBar = view.findViewById(R.id.search_bar);
         SearchView searchView = view.findViewById(R.id.search_view);
         searchView.setupWithSearchBar(searchBar);
-        FriendsAdapter searchViewAdapter = new FriendsAdapter(new ArrayList<>());
+        FriendsAdapter searchViewAdapter = new FriendsAdapter(new ArrayList<>(), this);
         RecyclerView searchViewRecyclerView = view.findViewById(R.id.reactive_list);
         searchViewRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         searchViewRecyclerView.setAdapter(searchViewAdapter);
@@ -111,7 +112,7 @@ public class FriendsFragment extends Fragment {
 
         RecyclerView friendListView = view.findViewById(R.id.friends_list);
         friendListView.setLayoutManager(new LinearLayoutManager(getContext()));
-        friendsAdapter = new FriendsAdapter(new ArrayList<>());
+        friendsAdapter = new FriendsAdapter(new ArrayList<>(), this);
 
         friendListView.setAdapter(friendsAdapter);
         FriendManager.getInstance().getFriendsList().observe(getViewLifecycleOwner(), friendList -> {
@@ -218,5 +219,16 @@ public class FriendsFragment extends Fragment {
 
         dialog.show();
 
+    }
+
+    @Override
+    public void onFriendClick(Friend friend) {
+        String TAG = "DiscussionsFragment";
+        Log.d(TAG, "onDiscussionClick: " + friend.getUserId());
+        FriendProfileFragment friendProfileFragment = FriendProfileFragment.newInstance(friend.getUserId());
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, friendProfileFragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

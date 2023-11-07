@@ -11,7 +11,6 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.helpers.FirebaseHelper;
 import com.example.helpers.ImageHelper;
 import com.example.model.Friend;
@@ -23,16 +22,23 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private List<Friend> friendlist;
     private final ImageHelper imageHelper = new ImageHelper();
 
+    public interface OnFriendClickListener {
+        void onFriendClick(Friend friend);
+    }
 
-    public FriendsAdapter(List<Friend> friendlist) {
+    private final FriendsAdapter.OnFriendClickListener listener;
+
+
+    public FriendsAdapter(List<Friend> friendlist, FriendsAdapter.OnFriendClickListener listener) {
         this.friendlist = friendlist;
+        this.listener = listener;
     }
 
     public FriendViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.friendlist_item, parent, false);
-        return new FriendViewHolder(itemView);
+        return new FriendViewHolder(itemView, listener);
     }
 
     @Override
@@ -59,11 +65,18 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         public TextView userName, userAvatar;
         public ImageView userPic;
 
-        public FriendViewHolder(View itemView) {
+        public FriendViewHolder(View itemView, final FriendsAdapter.OnFriendClickListener listener) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             userAvatar = itemView.findViewById(R.id.user_avatar);
             userPic = itemView.findViewById(R.id.profileImageView);
+
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (listener != null && position != RecyclerView.NO_POSITION) {
+                    listener.onFriendClick(friendlist.get(position));
+                }
+            });
         }
 
         private void showPopupMenu(View view, int position) {
