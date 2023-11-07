@@ -5,12 +5,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.helpers.FirebaseHelper;
+import com.example.helpers.ImageHelper;
 import com.example.model.Discussion;
 import com.example.model.Friend;
 import com.example.model.User;
@@ -24,6 +26,8 @@ import java.util.List;
 public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.DiscussionViewHolder> {
     private List<Discussion> discussions;
     private final String currentUserId;
+
+    private final ImageHelper imageHelper = new ImageHelper();
 
 
     public interface OnDiscussionClickListener {
@@ -53,7 +57,7 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
         String receiverID = discussion.getOtherParticipantIDs(currentUserId).get(0);
         String receiverUsername = discussion.getOtherParticipantDetails(currentUserId).get(receiverID).get("username").toString();
         holder.userName.setText(receiverUsername);
-        holder.userAvatar.setText(receiverUsername.substring(0, 1).toUpperCase());
+        imageHelper.fetchAndSetUserProfileImage(receiverID, holder.userPic, holder.userAvatar);
 
         if (discussion.getLastMessage() == null) {
             holder.lastMessage.setText("");
@@ -76,8 +80,9 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
         public TextView userName;
         public TextView lastMessage;
         public TextView unreadBadge;
-
         public TextView userAvatar;
+
+        public ImageView userPic;
 
         public DiscussionViewHolder(View itemView, List<Discussion> discussions,
                                     final OnDiscussionClickListener listener) {
@@ -86,6 +91,7 @@ public class DiscussionsAdapter extends RecyclerView.Adapter<DiscussionsAdapter.
             lastMessage = itemView.findViewById(R.id.last_message);
             unreadBadge = itemView.findViewById(R.id.unread_badge);
             userAvatar = itemView.findViewById(R.id.user_avatar);
+            userPic = itemView.findViewById(R.id.profileImageView);
 
             itemView.setOnClickListener(v -> {
                 int position = getAdapterPosition();

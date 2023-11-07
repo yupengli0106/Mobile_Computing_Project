@@ -4,13 +4,16 @@ import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.helpers.FirebaseHelper;
+import com.example.helpers.ImageHelper;
 import com.example.model.Friend;
 import com.example.zenly.R;
 
@@ -18,6 +21,7 @@ import java.util.List;
 
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendViewHolder> {
     private List<Friend> friendlist;
+    private final ImageHelper imageHelper = new ImageHelper();
 
 
     public FriendsAdapter(List<Friend> friendlist) {
@@ -36,7 +40,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
         Friend friend = friendlist.get(position);
         holder.userName.setText(friend.getUsername());
-        holder.userAvatar.setText(friend.getUsername().substring(0, 1).toUpperCase());
+
+        imageHelper.fetchAndSetUserProfileImage(friend.getUserId(), holder.userPic, holder.userAvatar);
 
         holder.itemView.setOnLongClickListener(v -> {
             holder.showPopupMenu(v, position);
@@ -52,11 +57,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     public class FriendViewHolder extends RecyclerView.ViewHolder {
         public TextView userName, userAvatar;
+        public ImageView userPic;
 
         public FriendViewHolder(View itemView) {
             super(itemView);
             userName = itemView.findViewById(R.id.user_name);
             userAvatar = itemView.findViewById(R.id.user_avatar);
+            userPic = itemView.findViewById(R.id.profileImageView);
         }
 
         private void showPopupMenu(View view, int position) {

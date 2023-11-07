@@ -52,7 +52,15 @@ dependencies {
     implementation ("com.google.firebase:firebase-auth:22.1.2")
     implementation("com.google.firebase:firebase-analytics")
 
+    // Add the dependency for the Cloud Storage library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-storage")
+
     //Google Maps
     implementation ("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
+
+    implementation("com.github.bumptech.glide:glide:4.13.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.13.0")
+
 }
