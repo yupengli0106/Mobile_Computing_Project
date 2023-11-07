@@ -55,7 +55,7 @@
             android:background="@drawable/chat_background_input"
             android:ems="10"
             android:inputType="text"
-            android:textColorHint="white"
+            android:textColorHint="@color/white"
             android:hint="Type a message"
             android:textColor="@color/white"
             android:paddingLeft="10dp"
