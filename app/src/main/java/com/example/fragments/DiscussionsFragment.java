@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,8 +47,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discussions, container, false);
     }
 
@@ -64,13 +62,11 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
         discussionRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         DiscussionsAdapter discussionsAdapter = new DiscussionsAdapter(currentUserId, new ArrayList<>(), this);
         discussionRecyclerView.setAdapter(discussionsAdapter);
-        DiscussionsManager.getInstance().getDiscussions().observe(getViewLifecycleOwner(),
-                discussionsAdapter::setDiscussionList);
+        DiscussionsManager.getInstance().getDiscussions().observe(getViewLifecycleOwner(), discussionsAdapter::setDiscussionList);
     }
 
     private void showNewDiscussionDialog() {
-
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(getContext());
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext());
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_new_discussion, null);
 
@@ -82,9 +78,7 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
             newDiscussionAdapter.setFriends(friends);
         });
 
-        builder.setView(dialogView)
-                .setTitle("Start Discussion")
-                .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
+        builder.setView(dialogView).setTitle("Start Discussion").setNegativeButton("Cancel", (dialog, id) -> dialog.cancel());
 
         AlertDialog dialog = builder.create();
 
@@ -93,13 +87,8 @@ public class DiscussionsFragment extends Fragment implements DiscussionsAdapter.
 
     @Override
     public void onDiscussionClick(Discussion discussion) {
-        String TAG = "DiscussionsFragment";
-        Log.d(TAG, "onDiscussionClick: " + discussion.getDiscussionId());
         DiscussionDetailFragment detailFragment = DiscussionDetailFragment.newInstance(discussion);
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, detailFragment)
-                .addToBackStack(null)
-                .commit();
+        getParentFragmentManager().beginTransaction().replace(R.id.fragment_container, detailFragment).addToBackStack(null).commit();
         firebaseHelper.updateConversationLastTimeOpened(discussion.getDiscussionId());
     }
 }

@@ -1,5 +1,6 @@
 package com.example.fragments;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -14,20 +15,16 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.helpers.FirebaseHelper;
-import com.example.helpers.ImageHelper;
 import com.example.zenly.R;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
+
 public class FriendProfileFragment extends Fragment {
     private String friendId;
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
-    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final String TAG = "FriendProfileFragment";
-
-    private final ImageHelper imageHelper = new ImageHelper();
 
     public FriendProfileFragment() {
         // Required empty public constructor
@@ -50,8 +47,7 @@ public class FriendProfileFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_friend_profile, container, false);
 
@@ -72,6 +68,7 @@ public class FriendProfileFragment extends Fragment {
 
     public void fetchAndSetUserDetails(TextView usernameTextView, TextView emailTextView, ImageView imageView, TextView birthdateTextView, TextView genderTextView, TextView bioTextView, TextView stepTextView) {
         firebaseHelper.usersRef.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
@@ -79,9 +76,7 @@ public class FriendProfileFragment extends Fragment {
                         String imageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
                         if (imageUrl != null && !imageUrl.isEmpty()) {
                             // Use Glide to load the image
-                            Glide.with(getContext())
-                                    .load(imageUrl)
-                                    .into(imageView);
+                            Glide.with(requireContext()).load(imageUrl).into(imageView);
                         }
                     }
                     if (dataSnapshot.hasChild("username")) {

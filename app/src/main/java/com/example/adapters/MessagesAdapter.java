@@ -76,5 +76,4 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         this.messages = messages;
         notifyDataSetChanged();
     }
-
 }

@@ -12,12 +12,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,11 +35,7 @@ public class CameraHelper {
 
     private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
-    public CameraHelper(
-            Context context,
-            ActivityResultLauncher<String> requestPermissionLauncher,
-            ActivityResultLauncher<Uri> takePictureLauncher,
-            ActivityResultLauncher<String> pickImageLauncher) {
+    public CameraHelper(Context context, ActivityResultLauncher<String> requestPermissionLauncher, ActivityResultLauncher<Uri> takePictureLauncher, ActivityResultLauncher<String> pickImageLauncher) {
         this.context = context;
         this.requestPermissionLauncher = requestPermissionLauncher;
         this.takePictureLauncher = takePictureLauncher;
@@ -70,17 +62,11 @@ public class CameraHelper {
     }
 
     private File createImageFile() throws IOException {
-        // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
 
-        // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -103,26 +89,19 @@ public class CameraHelper {
 
     public void uploadImageToFirebaseStorage(Uri fileUri) {
         if (fileUri != null) {
-            // Get a reference to the location where we'll store our photos
             StorageReference storageRef = FirebaseStorage.getInstance().getReference();
             String currentUserId = firebaseHelper.getCurrentUserId();
             String fileName = currentUserId + ".jpg";
 
-            // Get a reference to store file at user_photos/<FILENAME>
             StorageReference photoRef = storageRef.child("user_profile_pictures/" + fileName);
-
             // Upload file to Firebase Storage
             photoRef.putFile(fileUri).addOnSuccessListener(taskSnapshot -> {
-                // After the upload is complete, get the download URL
                 photoRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                    // Here 'downloadUri' is the URL pointing to the uploaded file
                     updateUserProfileInfo(currentUserId, downloadUri.toString());
                 }).addOnFailureListener(e -> {
-                    // Handle any errors
                     Toast.makeText(context, "Failed to get download URL", Toast.LENGTH_SHORT).show();
                 });
             }).addOnFailureListener(e -> {
-                // Handle any errors
                 Toast.makeText(context, "Upload failed", Toast.LENGTH_SHORT).show();
             });
         }
@@ -132,12 +111,9 @@ public class CameraHelper {
         Map<String, Object> updates = new HashMap<>();
         updates.put("profileImageUrl", imageUrl);
 
-        // Update the child with the new map
         firebaseHelper.usersRef.child(userId).updateChildren(updates).addOnSuccessListener(aVoid -> {
-            // Update UI or inform the user of success
             Toast.makeText(context, "User profile updated", Toast.LENGTH_SHORT).show();
         }).addOnFailureListener(e -> {
-            // Handle any errors
             Toast.makeText(context, "Failed to update user profile", Toast.LENGTH_SHORT).show();
         });
     }

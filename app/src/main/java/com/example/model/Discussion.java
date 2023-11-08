@@ -1,7 +1,5 @@
 package com.example.model;
 
-import android.util.Log;
-
 import com.example.helpers.FirebaseHelper;
 
 import java.io.Serializable;

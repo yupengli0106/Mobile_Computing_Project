@@ -5,6 +5,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.bumptech.glide.Glide;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -17,18 +19,10 @@ public class ImageHelper {
     public ImageHelper() {
     }
 
-    /**
-     * Fetches the profile image URL for the user and applies it to the ImageView.
-     * If the URL is null, a default avatar will be shown.
-     *
-     * @param userId    The ID of the user whose image is to be fetched.
-     * @param imageView The ImageView where the profile image should be displayed.
-     * @param textView  The TextView that should display the user's initial if there is no profile image.
-     */
     public void fetchAndSetUserProfileImage(String userId, ImageView imageView, TextView textView) {
         firebaseHelper.usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.hasChild("profileImageUrl")) {
                     String imageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
                     if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -44,20 +38,13 @@ public class ImageHelper {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
                 // Handle possible errors.
                 Log.d("DatabaseError", "fetchAndSetUserProfileImage:onCancelled", databaseError.toException());
             }
         });
     }
 
-    /**
-     * Sets the ImageView to a default avatar and makes the TextView visible with the initial of the username.
-     *
-     * @param imageView    The ImageView that would have shown the profile image.
-     * @param textView     The TextView to display the user's initial.
-     * @param dataSnapshot The DataSnapshot containing user data.
-     */
     private void setImageToDefaultAvatar(ImageView imageView, TextView textView, DataSnapshot dataSnapshot) {
         imageView.setVisibility(View.GONE);
         textView.setVisibility(View.VISIBLE);
@@ -66,6 +53,4 @@ public class ImageHelper {
             textView.setText(username != null && !username.isEmpty() ? username.substring(0, 1).toUpperCase() : "");
         }
     }
-
-
 }

@@ -23,6 +23,7 @@ import com.example.zenly.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class DiscussionDetailFragment extends Fragment {
     private Discussion discussion;
@@ -51,8 +52,7 @@ public class DiscussionDetailFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_discussion_detail, container, false);
     }
 
@@ -65,7 +65,7 @@ public class DiscussionDetailFragment extends Fragment {
         TextView receiverIdTextView = view.findViewById(R.id.receiver_text_view);
 
         String receiverID = discussion.getOtherParticipantIDs(currentUserID).get(0);
-        String receiverUsername = discussion.getOtherParticipantDetails(currentUserID).get(receiverID).get("username").toString();
+        String receiverUsername = Objects.requireNonNull(Objects.requireNonNull(discussion.getOtherParticipantDetails(currentUserID).get(receiverID)).get("username")).toString();
         receiverIdTextView.setText(receiverUsername);
 
         EditText messageInput = view.findViewById(R.id.message_input);
@@ -78,10 +78,7 @@ public class DiscussionDetailFragment extends Fragment {
 
         backButton.setOnClickListener(v -> {
             DiscussionsFragment discussionsFragmentFragment = DiscussionsFragment.newInstance();
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, discussionsFragmentFragment)
-                    .addToBackStack(null)
-                    .commit();
+            getParentFragmentManager().beginTransaction().replace(R.id.fragment_container, discussionsFragmentFragment).addToBackStack(null).commit();
             firebaseHelper.updateConversationLastTimeOpened(discussion.getDiscussionId());
         });
 
@@ -92,7 +89,6 @@ public class DiscussionDetailFragment extends Fragment {
                 messageInput.setText("");
             }
         });
-
 
         firebaseHelper.listenForMessagesInDiscussion(discussion.getDiscussionId(), new FirebaseHelper.NewMessageCallback() {
             @Override

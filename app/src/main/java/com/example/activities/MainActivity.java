@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import com.example.fragments.ChatFragment;
 import com.example.fragments.FriendsFragment;
 import com.example.fragments.MapFragment;
 import com.example.fragments.DiscussionsFragment;
@@ -35,12 +34,10 @@ public class MainActivity extends AppCompatActivity {
     // reuse mapFragment
     private final MapFragment mapFragment = new MapFragment();
     private final DiscussionsFragment discussionsFragment = new DiscussionsFragment();
-    private final ChatFragment chatFragment = new ChatFragment();
     private final FriendsFragment friendsFragment = new FriendsFragment();
     private final ProfileFragment profileFragment = new ProfileFragment();
-
     private final TopListFragment topListFragment = new TopListFragment();
-    private FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+    private final FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
 
 
     private BadgeDrawable friendRequestsBadge;
@@ -83,8 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFriendRequestError(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the friend requests: " + e.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "can not get the friend requests: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -101,8 +97,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailed(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the friend list: " + e.getMessage(), Toast.LENGTH_LONG)
-                        .show();
+                Toast.makeText(MainActivity.this, "can not get the friend list: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -128,8 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailed(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
-                        .show();
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -155,8 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailed(Exception e) {
-                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG)
-                        .show();
+                Toast.makeText(MainActivity.this, "can not get the discussion list: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -172,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = profileFragment;
             } else if (itemId == R.id.nav_friends) {
                 selectedFragment = friendsFragment;
-            }else if (itemId == R.id.nav_top) {
+            } else if (itemId == R.id.nav_top) {
                 selectedFragment = topListFragment;
             }
 
@@ -196,21 +189,15 @@ public class MainActivity extends AppCompatActivity {
         Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
 
         // if the current fragment is one of the fragments that we want to handle onBackPressed
-        if (currentFragment instanceof MapFragment || currentFragment instanceof ChatFragment ||
-                currentFragment instanceof FriendsFragment || currentFragment instanceof ProfileFragment) {
+        if (currentFragment instanceof MapFragment || currentFragment instanceof DiscussionsFragment || currentFragment instanceof FriendsFragment || currentFragment instanceof ProfileFragment) {
             // show an alert dialog to ask the user if they want to exit
-            new AlertDialog.Builder(this)
-                    .setTitle("Exit")
-                    .setMessage("Do you want to back to home screen?")
-                    .setPositiveButton("Yes", (dialog, which) -> {
-                        // if the user chooses to exit, then exit
-                        Intent intent = new Intent(Intent.ACTION_MAIN);
-                        intent.addCategory(Intent.CATEGORY_HOME);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    })
-                    .setNegativeButton("No", null)
-                    .show();
+            new AlertDialog.Builder(this).setTitle("Exit").setMessage("Do you want to back to home screen?").setPositiveButton("Yes", (dialog, which) -> {
+                // if the user chooses to exit, then exit
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }).setNegativeButton("No", null).show();
         } else {
             super.onBackPressed();
         }
