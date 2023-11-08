@@ -15,7 +15,6 @@ import com.example.helpers.ImageHelper;
 import com.example.model.Friend;
 import com.example.zenly.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -32,8 +31,7 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
 
     public NewDiscussionViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.new_discussion_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.new_discussion_item, parent, false);
         return new NewDiscussionViewHolder(itemView);
     }
 
@@ -44,24 +42,20 @@ public class NewDiscussionAdapter extends RecyclerView.Adapter<NewDiscussionAdap
 
         imageHelper.fetchAndSetUserProfileImage(friend.getUserId(), holder.userPic, holder.userAvatar);
 
-        holder.newDiscussionButton.setOnClickListener(
-                v -> {
-                    FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
-                    String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    firebaseHelper.createDiscussion(friend.getUserId(), new FirebaseHelper.CreateDiscussionCallback() {
-                                @Override
-                                public void onDiscussionCreated(String discussionId) {
-                                    Log.d(TAG, "onDiscussionCreated");
-                                }
-
-                                @Override
-                                public void onFailed(Exception e) {
-                                    Log.d(TAG, "onFailed");
-                                }
-                            }
-                    );
+        holder.newDiscussionButton.setOnClickListener(v -> {
+            FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+            firebaseHelper.createDiscussion(friend.getUserId(), new FirebaseHelper.CreateDiscussionCallback() {
+                @Override
+                public void onDiscussionCreated(String discussionId) {
+                    Log.d(TAG, "onDiscussionCreated");
                 }
-        );
+
+                @Override
+                public void onFailed(Exception e) {
+                    Log.d(TAG, "onFailed");
+                }
+            });
+        });
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.example.model;
 
-import java.util.List;
 import java.util.Map;
 
 public class User {
@@ -8,18 +7,18 @@ public class User {
     public String username;
     public String email;
     public Long step;
-public Map<String,String> friends;
+    public Map<String, String> friends;
 
-    public Map<String,String> getFriends() {
+    public Map<String, String> getFriends() {
         return friends;
     }
 
-    public void setFriends(Map<String,String> friends) {
+    public void setFriends(Map<String, String> friends) {
         this.friends = friends;
     }
 
     public Long getStep() {
-        return step==null?0:step;
+        return step == null ? 0 : step;
     }
 
     public void setStep(Long step) {

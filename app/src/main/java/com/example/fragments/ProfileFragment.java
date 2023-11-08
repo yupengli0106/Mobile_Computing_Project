@@ -20,7 +20,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.content.Intent;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -69,8 +68,7 @@ public class ProfileFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -87,28 +85,20 @@ public class ProfileFragment extends Fragment {
 
         fetchAndSetUserDetails(usernameTextView, emailTextView, imageView, tvBirthdate, spinnerGender, etBio);
 
-        buttonBirthdate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                final Calendar c = Calendar.getInstance();
-                int year = c.get(Calendar.YEAR);
-                int month = c.get(Calendar.MONTH);
-                int day = c.get(Calendar.DAY_OF_MONTH);
+        buttonBirthdate.setOnClickListener(view12 -> {
+            final Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(),
-                        new DatePickerDialog.OnDateSetListener() {
-                            @Override
-                            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                                String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + year;
-                                tvBirthdate.setText(selectedDate);
-                            }
-                        }, year, month, day);
-                datePickerDialog.show();
-            }
+            DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(), (view1, year1, monthOfYear, dayOfMonth) -> {
+                String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + year1;
+                tvBirthdate.setText(selectedDate);
+            }, year, month, day);
+            datePickerDialog.show();
         });
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.gender_array, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(requireContext(), R.array.gender_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGender.setAdapter(adapter);
 
@@ -125,13 +115,10 @@ public class ProfileFragment extends Fragment {
 
         ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
-                // Permission is granted. Continue the action or workflow in your app.
+                // The permission to use the camera has already been granted
+                // Continue
             } else {
-                // Explain to the user that the feature is unavailable because the
-                // features requires a permission that the user has denied. At the
-                // same time, respect the user's decision. Don't link to system
-                // settings in an effort to convince the user to change their
-                // decision.
+                new AlertDialog.Builder(getContext()).setTitle("Camera Permission").setMessage("Please allow access to the camera in order to use this feature").setPositiveButton("Dismiss", (dialog, which) -> dialog.dismiss()).create().show();
             }
         });
 
@@ -151,12 +138,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        cameraHelper = new CameraHelper(
-                getContext(),
-                requestPermissionLauncher,
-                takePictureLauncher,
-                pickImageLauncher
-        );
+        cameraHelper = new CameraHelper(getContext(), requestPermissionLauncher, takePictureLauncher, pickImageLauncher);
 
 
         Button btnAddImage = view.findViewById(R.id.button_change_picture);
@@ -190,11 +172,7 @@ public class ProfileFragment extends Fragment {
 
             if (photoPath != null) {
                 File photoFile = new File(photoPath);
-                Uri photoUri = FileProvider.getUriForFile(
-                        getContext(),
-                        getContext().getPackageName() + ".provider",
-                        photoFile
-                );
+                Uri photoUri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".provider", photoFile);
                 cameraHelper.uploadImageToFirebaseStorage(photoUri);
             }
             updateUserDetails(birthdate, bio, gender);
@@ -208,20 +186,17 @@ public class ProfileFragment extends Fragment {
         // Options to show in dialog
         String[] items = {"Select from Gallery", "Take Photo"};
 
-        new AlertDialog.Builder(getContext())
-                .setTitle("Add Image")
-                .setItems(items, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) {
-                            // Select from gallery
-                            cameraHelper.openGallery();
-                        } else {
-                            // Take a photo with the camera
-                            cameraHelper.openCamera();
-                        }
-                    }
-                })
-                .show();
+        new AlertDialog.Builder(getContext()).setTitle("Add Image").setItems(items, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                if (which == 0) {
+                    // Select from gallery
+                    cameraHelper.openGallery();
+                } else {
+                    // Take a photo with the camera
+                    cameraHelper.openCamera();
+                }
+            }
+        }).show();
     }
 
     public void fetchAndSetUserDetails(TextView usernameTextView, TextView emailTextView, ImageView imageView, TextView birthdateTextView, Spinner genderSpinner, EditText bioEditText) {
@@ -234,9 +209,7 @@ public class ProfileFragment extends Fragment {
                         String imageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
                         if (imageUrl != null && !imageUrl.isEmpty()) {
                             // Use Glide to load the image
-                            Glide.with(getContext())
-                                    .load(imageUrl)
-                                    .into(imageView);
+                            Glide.with(requireContext()).load(imageUrl).into(imageView);
                         }
                     }
                     if (dataSnapshot.hasChild("username")) {
@@ -253,8 +226,7 @@ public class ProfileFragment extends Fragment {
                     }
                     if (dataSnapshot.hasChild("gender")) {
                         String gender = dataSnapshot.child("gender").getValue(String.class);
-                        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
-                                R.array.gender_array, android.R.layout.simple_spinner_item);
+                        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(requireContext(), R.array.gender_array, android.R.layout.simple_spinner_item);
                         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         genderSpinner.setAdapter(adapter);
                         genderSpinner.setSelection(adapter.getPosition(gender));
